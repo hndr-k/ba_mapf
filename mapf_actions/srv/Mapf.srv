@@ -1,0 +1,7 @@
+#goal defintion - start and goal pose and timestamp
+geometry_msgs/PoseStamped start
+geometry_msgs/PoseStamped goal
+builtin_interfaces/Time timestamp
+uint8 robotino_id
+---
+nav_msgs/Path path

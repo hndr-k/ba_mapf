@@ -1,0 +1,11 @@
+Webots Proto Cache File version 1.5
+protoFileHash: 1836041390c0e1a5b039a712526f2817
+needsRobotAncestor: 0
+baseType: Solid
+slotType: 
+parameters: translation,rotation,name,model,extension
+tags: 
+license:  Apache License 2.0
+licenseUrl:  http://www.apache.org/licenses/LICENSE-2.0.
+documentationUrl: 
+info: This\sis\sa\sPROTO\sfile\sfor\sWebots\sof\sa\splatform\sfor\sthe\srobot\sRobotino\s3\sfrom\sFesto.\nIt\sis\sa\sfeature\sfor\sRobotino\s3\sto\sfullfil\syour\srequirement.\nUse\sit\swith\sthe\s"bodySlot"\sfield\sof\sthe\sRobotino\s3\srobot.\n
