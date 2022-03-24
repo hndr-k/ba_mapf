@@ -83,17 +83,20 @@ void eecbs_server::init() {
 		("targetReasoning", boost::program_options::value<bool>()->default_value(true), "target reasoning")
 		("restart", boost::program_options::value<int>()->default_value(0), "rapid random restart times")
 		;
-  boost::program_options::store(boost::program_options::parse_command_line(0, [], desc), vm);
+ 
 	if (vm.count("help")) {
 		cout << desc << endl;
-		return 1;
-	}
-
+		
+	} 
+ char* test[] = {
+   NULL
+ };
+  boost::program_options::store(boost::program_options::parse_command_line(0, test, desc), vm);
 	boost::program_options::notify(vm);
 	if (vm["suboptimality"].as<double>() < 1)
 	{
 		cerr << "Suboptimal bound should be at least 1!" << endl;
-		return -1;
+
 	}
 
 	
@@ -108,13 +111,13 @@ void eecbs_server::init() {
 	else
 	{
 		cout << "WRONG high level solver!" << endl;
-		return -1;
+		
 	}
 
 	if (s == high_level_solver_type::ASTAR && vm["suboptimality"].as<double>() > 1)
 	{
 		cerr << "A* cannot perform suboptimal search!" << endl;
-		return -1;
+		
 	}
 
 
@@ -129,13 +132,13 @@ void eecbs_server::init() {
 	else
 	{
 		cout << "WRONG heuristics strategy!" << endl;
-		return -1;
+		
 	}
 
     if ((h == heuristics_type::CG || h == heuristics_type::DG) && vm["lowLevelSolver"].as<bool>())
     {
         cerr << "CG or DG heuristics do not work with low level of suboptimal search!" << endl;
-        return -1;
+        
     }
 
 
@@ -154,7 +157,7 @@ void eecbs_server::init() {
 	else
 	{
 		cout << "WRONG inadmissible heuristics strategy!" << endl;
-		return -1;
+	
 	}
 
 	conflict = conflict_selection::EARLIEST;
@@ -171,87 +174,6 @@ void eecbs_server::init() {
 	int runs = 1 + vm["restart"].as<int>();
 	//////////////////////////////////////////////////////////////////////
     // initialize the solver
-	if (vm["lowLevelSolver"].as<bool>())
-    {
-        ECBS ecbs(instance, false, vm["screen"].as<int>());
-        ecbs.setPrioritizeConflicts(vm["prioritizingConflicts"].as<bool>());
-        ecbs.setDisjointSplitting(vm["disjointSplitting"].as<bool>());
-        ecbs.setBypass(vm["bypass"].as<bool>());
-        ecbs.setRectangleReasoning(vm["rectangleReasoning"].as<bool>());
-        ecbs.setCorridorReasoning(vm["corridorReasoning"].as<bool>());
-        ecbs.setHeuristicType(h, h_hat);
-        ecbs.setTargetReasoning(vm["targetReasoning"].as<bool>());
-        ecbs.setMutexReasoning(false);
-        ecbs.setConflictSelectionRule(conflict);
-        ecbs.setNodeSelectionRule(n);
-        ecbs.setSavingStats(vm["stats"].as<bool>());
-        ecbs.setHighLevelSolver(s, vm["suboptimality"].as<double>());
-        //////////////////////////////////////////////////////////////////////
-        // run
-        double runtime = 0;
-        int lowerbound = 0;
-        for (int i = 0; i < runs; i++)
-        {
-            ecbs.clear();
-            ecbs.solve(vm["cutoffTime"].as<double>() / runs, lowerbound);
-            runtime += ecbs.runtime;
-            if (ecbs.solution_found)
-                break;
-            lowerbound = ecbs.getLowerBound();
-            ecbs.randomRoot = true;
-            cout << "Failed to find solutions in Run " << i << endl;
-        }
-        ecbs.runtime = runtime;
-        if (vm.count("output"))
-            ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
-        if (ecbs.solution_found && vm.count("outputPaths"))
-            ecbs.savePaths(vm["outputPaths"].as<string>());
-        /*size_t pos = vm["output"].as<string>().rfind('.');      // position of the file extension
-        string output_name = vm["output"].as<string>().substr(0, pos);     // get the name without extension
-        cbs.saveCT(output_name); // for debug*/
-        if (vm["stats"].as<bool>())
-            ecbs.saveStats(vm["output"].as<string>(), vm["agents"].as<string>());
-        ecbs.clearSearchEngines();
-    }
-    else
-    {
-        CBS cbs(instance, false, vm["screen"].as<int>());
-        cbs.setPrioritizeConflicts(vm["prioritizingConflicts"].as<bool>());
-        cbs.setDisjointSplitting(vm["disjointSplitting"].as<bool>());
-        cbs.setBypass(vm["bypass"].as<bool>());
-        cbs.setRectangleReasoning(vm["rectangleReasoning"].as<bool>());
-        cbs.setCorridorReasoning(vm["corridorReasoning"].as<bool>());
-        cbs.setHeuristicType(h, h_hat);
-        cbs.setTargetReasoning(vm["targetReasoning"].as<bool>());
-        cbs.setMutexReasoning(false);
-        cbs.setConflictSelectionRule(conflict);
-        cbs.setNodeSelectionRule(n);
-        cbs.setSavingStats(vm["stats"].as<bool>());
-        cbs.setHighLevelSolver(s, vm["suboptimality"].as<double>());
-        //////////////////////////////////////////////////////////////////////
-        // run
-        double runtime = 0;
-        int lowerbound = 0;
-        for (int i = 0; i < runs; i++)
-        {
-            cbs.clear();
-            cbs.solve(vm["cutoffTime"].as<double>() / runs, lowerbound);
-            runtime += cbs.runtime;
-            if (cbs.solution_found)
-                break;
-            lowerbound = cbs.getLowerBound();
-            cbs.randomRoot = true;
-            cout << "Failed to find solutions in Run " << i << endl;
-        }
-        cbs.runtime = runtime;
-        if (vm.count("output"))
-            cbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
-        if (cbs.solution_found && vm.count("outputPaths"))
-            cbs.savePaths(vm["outputPaths"].as<string>());
-        if (vm["stats"].as<bool>())
-            cbs.saveStats(vm["output"].as<string>(), vm["agents"].as<string>());
-        cbs.clearSearchEngines();
-    }
 
 }
 
