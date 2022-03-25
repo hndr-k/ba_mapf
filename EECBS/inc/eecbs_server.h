@@ -5,6 +5,7 @@
 #include "mapf_actions/srv/mapf.hpp"
 #include <math.h>
 #include "ECBS.h"
+#include "structs.h"
 
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -107,8 +108,18 @@ heuristics_type h;
 heuristics_type h_hat; // inadmissible heuristics
 conflict_selection conflict;
 node_selection n ;
+Instance instance;
+std::vector<rosAgent> agents;
+std::vector<rosPath> paths;
 
 
+void update_agent(geometry_msgs::msg::PoseStamped start,
+                        geometry_msgs::msg::PoseStamped goal, rosAgent &agent);
+
+
+void create_agent(geometry_msgs::msg::PoseStamped start,
+                        geometry_msgs::msg::PoseStamped goal, int start_id,
+                        int goal_id, int robotino_id);
 boost::program_options::options_description desc;
 boost::program_options::variables_map vm;
 protected:

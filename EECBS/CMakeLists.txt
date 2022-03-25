@@ -55,7 +55,6 @@ set( SOURCE_FILES
      src/ConstraintPropagation.cpp
      src/ConstraintTable.cpp
      src/CorridorReasoning.cpp
-     src/driver.cpp 
      src/ECBS.cpp
      src/eecbs_server.cpp
      src/IncrementalPairwiseMutexPropagation.cpp

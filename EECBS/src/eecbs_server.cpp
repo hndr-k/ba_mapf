@@ -163,18 +163,6 @@ void eecbs_server::init() {
 	conflict = conflict_selection::EARLIEST;
 	n = node_selection::NODE_CONFLICTPAIRS;
 
-
-	srand((int)time(0));
-
-	///////////////////////////////////////////////////////////////////////////
-	// load the instance
-	Instance instance();
-
-	srand(0);
-	int runs = 1 + vm["restart"].as<int>();
-	//////////////////////////////////////////////////////////////////////
-    // initialize the solver
-
 }
 
 void eecbs_server::control_callback() {
@@ -185,6 +173,91 @@ void eecbs_server::control_callback() {
   if (costmap_ros_ != nullptr && costmap_ != nullptr) {
     //               if (costmap_ros_->get_current_state().id() ==
     //               lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+  Instance instance(costmap_, agents);
+
+	srand(0);
+	int runs = 1 + vm["restart"].as<int>();
+	//////////////////////////////////////////////////////////////////////
+    // initialize the solver
+	if (vm["lowLevelSolver"].as<bool>())
+    {
+        ECBS ecbs(instance, false, vm["screen"].as<int>());
+        ecbs.setPrioritizeConflicts(vm["prioritizingConflicts"].as<bool>());
+        ecbs.setDisjointSplitting(vm["disjointSplitting"].as<bool>());
+        ecbs.setBypass(vm["bypass"].as<bool>());
+        ecbs.setRectangleReasoning(vm["rectangleReasoning"].as<bool>());
+        ecbs.setCorridorReasoning(vm["corridorReasoning"].as<bool>());
+        ecbs.setHeuristicType(h, h_hat);
+        ecbs.setTargetReasoning(vm["targetReasoning"].as<bool>());
+        ecbs.setMutexReasoning(false);
+        ecbs.setConflictSelectionRule(conflict);
+        ecbs.setNodeSelectionRule(n);
+        ecbs.setSavingStats(vm["stats"].as<bool>());
+        ecbs.setHighLevelSolver(s, vm["suboptimality"].as<double>());
+        //////////////////////////////////////////////////////////////////////
+        // run
+        double runtime = 0;
+        int lowerbound = 0;
+        for (int i = 0; i < runs; i++)
+        {
+            ecbs.clear();
+            ecbs.solve(vm["cutoffTime"].as<double>() / runs, lowerbound);
+            runtime += ecbs.runtime;
+            if (ecbs.solution_found)
+                break;
+            lowerbound = ecbs.getLowerBound();
+            ecbs.randomRoot = true;
+            cout << "Failed to find solutions in Run " << i << endl;
+        }
+        ecbs.runtime = runtime;
+        //if (vm.count("output"))
+        //    ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
+        if (ecbs.solution_found && vm.count("outputPaths"))
+            paths = ecbs.savePaths();
+        /*size_t pos = vm["output"].as<string>().rfind('.');      // position of the file extension
+        string output_name = vm["output"].as<string>().substr(0, pos);     // get the name without extension
+        cbs.saveCT(output_name); // for debug*/
+        //if (vm["stats"].as<bool>())
+        //    ecbs.saveStats(vm["output"].as<string>(), vm["agents"].as<string>());
+        ecbs.clearSearchEngines();
+    }
+    else
+    {
+        CBS cbs(instance, false, vm["screen"].as<int>());
+        cbs.setPrioritizeConflicts(vm["prioritizingConflicts"].as<bool>());
+        cbs.setDisjointSplitting(vm["disjointSplitting"].as<bool>());
+        cbs.setBypass(vm["bypass"].as<bool>());
+        cbs.setRectangleReasoning(vm["rectangleReasoning"].as<bool>());
+        cbs.setCorridorReasoning(vm["corridorReasoning"].as<bool>());
+        cbs.setHeuristicType(h, h_hat);
+        cbs.setTargetReasoning(vm["targetReasoning"].as<bool>());
+        cbs.setMutexReasoning(false);
+        cbs.setConflictSelectionRule(conflict);
+        cbs.setNodeSelectionRule(n);
+        cbs.setSavingStats(vm["stats"].as<bool>());
+        cbs.setHighLevelSolver(s, vm["suboptimality"].as<double>());
+        //////////////////////////////////////////////////////////////////////
+        // run
+        double runtime = 0;
+        int lowerbound = 0;
+        for (int i = 0; i < runs; i++)
+        {
+            cbs.clear();
+            cbs.solve(vm["cutoffTime"].as<double>() / runs, lowerbound);
+            runtime += cbs.runtime;
+            if (cbs.solution_found)
+                break;
+            lowerbound = cbs.getLowerBound();
+            cbs.randomRoot = true;
+            cout << "Failed to find solutions in Run " << i << endl;
+        }
+        cbs.runtime = runtime;
+        
+        if (cbs.solution_found && vm.count("outputPaths"))
+            paths = cbs.savePaths();
+        cbs.clearSearchEngines();
+    }
+
 
     if (true) {
 
@@ -239,12 +312,9 @@ eecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   //      }
 
   // create bond connection
+
   createBond();
 
-
-    if (true) {
-    std::cout << "map created" << std::endl;
-    }
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
@@ -297,15 +367,93 @@ nav2_util::CallbackReturn eecbs_server::on_shutdown(const rclcpp_lifecycle::Stat
 
 
 
+void eecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
+                        geometry_msgs::msg::PoseStamped goal, int start_id,
+                        int goal_id, int robotino_id) {
+  /*int resolution = current_grid_.info.resolution;*/
+  /*int pos_i = (start.pose.position.x - current_grid_.info.origin.position.x )
+  / resolution; int pos_j = (start.pose.position.y -
+  current_grid_.info.origin.position.y ) / resolution;
+
+  int goal_i = (goal.pose.position.x - current_grid_.info.origin.position.x ) /
+  resolution; int goal_j = (goal.pose.position.y -
+  current_grid_.info.origin.position.y ) / resolution;*/
+
+  uint start_x, start_y, goal_x, goal_y;
+  costmap_->worldToMap(start.pose.position.x, start.pose.position.y, start_x,
+                       start_y);
+  costmap_->worldToMap(goal.pose.position.x, goal.pose.position.y, goal_x,
+                       goal_y);
+  // TODO dynamic parametrization
+  rosAgent agent_;
+  agent_.goal_x = goal_x;
+  agent_.goal_y = goal_y;
+  agent_.start_x = start_x;
+  agent_.start_y = start_y;
+  agent_.id = robotino_id;
+  agents.push_back(agent_);
+
+}
+
+void eecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
+                        geometry_msgs::msg::PoseStamped goal, rosAgent &agent)
+
+{
+
+  uint start_x, start_y, goal_x, goal_y;
+  costmap_->worldToMap(start.pose.position.x, start.pose.position.y, start_x,
+                       start_y);
+  costmap_->worldToMap(goal.pose.position.x, goal.pose.position.y, goal_x,
+                       goal_y);
+
+  agent.goal_x = goal_x;
+  agent.goal_y = goal_y;
+  agent.start_x = start_x;
+  agent.start_y = start_y;
+  std::cout << "update: " << agent.start_x << " " << agent.start_y << "  "
+            << agent.goal_x << " " << agent.goal_y << "\n";
+
+}
 
 
 void eecbs_server::path_response(
     const std::shared_ptr<mapf_actions::srv::Mapf::Request> request,
     std::shared_ptr<mapf_actions::srv::Mapf::Response> response) {
 
+  bool agent_missing = true;
+
+
+  RCLCPP_INFO(this->get_logger(), "New request: %f %f -> %f %f!",
+              request->start.pose.position.x, request->start.pose.position.y,
+              request->goal.pose.position.x, request->goal.pose.position.y);
+
+
+  for (auto &agent : agents) {
+
+    if (agent.id == request->robotino_id) {
+
+      RCLCPP_INFO(this->get_logger(), "Agent id %i update!", agent.id);
+
+      update_agent(request->start, request->goal, agent);
+
+      agent_missing = false;
+
+    }
+  }
+  if (agent_missing) {
+  //  RCLCPP_INFO(this->get_logger(), "Creating agent.");
+    create_agent(request->start, request->goal, 0, 0, request->robotino_id);
+  //  RCLCPP_INFO(this->get_logger(), "Agent created!");
+  }
 
 
 
+  control_callback();
+
+nav_msgs::msg::Path path_;
+  path_.header.frame_id = "map";
+
+  path_.header.stamp = this->get_clock().get()->now();
 
   control_callback();
 
@@ -315,11 +463,66 @@ void eecbs_server::path_response(
   //
   //            RCLCPP_INFO(this->get_logger(), "Wait for path!");
   //	}
+  for (auto &path : paths) {
+    if (path.robot_id == request->robotino_id) {
+      for(int i = 0; i < path.x_poses.size(); i++)
+      {
+        geometry_msgs::msg::PoseStamped pose_;
+        double x, y;
+        costmap_->mapToWorld(path.x_poses[i], path.y_poses[i], x, y);
+        pose_.pose.position.x = x;
+        pose_.pose.position.y = y;
+        pose_.pose.position.z = 0.0;
+        pose_.pose.orientation.x = 0.0;
+        pose_.pose.orientation.y = 0.0;
+        pose_.pose.orientation.z = 0.0;
+        pose_.pose.orientation.z = 1.0;
+        pose_.header.frame_id = "map";
+        pose_.header.stamp = this->get_clock().get()->now();
+        path_.poses.push_back(pose_);
+ //       std::cout << "x: " << x << " y: " << y << std::endl;
+        
+      }
+    }
+      geometry_msgs::msg::PoseStamped pose_;
+      nav_msgs::msg::Path path_res;
+      if(path_.poses.size() < 10)
+      {
+      for(int i = 0; i < path_.poses.size(); i++)
+      {
+        geometry_msgs::msg::PoseStamped pose_res;
+        pose_res = path_.poses[i];
+        path_res.poses.push_back(pose_res);
+      }
+      pose_.pose = request->goal.pose;
+      pose_.header.frame_id = "map";
+      pose_.header.stamp = this->get_clock().get()->now();
+      path_res.poses.push_back(pose_);
+      }
+      else{
+      for(int i = 0; i < 10; i++)
+      {
+        geometry_msgs::msg::PoseStamped pose_res;
+        pose_res = path_.poses[i];
+        path_res.poses.push_back(pose_res);
+      }
+      pose_.pose = request->goal.pose;
+      pose_.header.frame_id = "map";
+      pose_.header.stamp = this->get_clock().get()->now();
+      path_res.poses.push_back(pose_);
+      }
+
+//      RCLCPP_INFO(this->get_logger(), "%d size of path", path_.poses.size());
+      path_res.header.frame_id = "map";
+      path_res.header.stamp = this->get_clock().get()->now();
+      response->path = path_res;
+      RCLCPP_INFO(this->get_logger(), "%d size of path",
+                  response->path.poses.size());
+    }
   
   RCLCPP_INFO(this->get_logger(), "Passing response!");
-}
 
-
+    }
 } // namespace mapf_action_server
 
 RCLCPP_COMPONENTS_REGISTER_NODE(eecbs_server::eecbs_server)
