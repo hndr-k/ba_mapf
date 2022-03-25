@@ -438,6 +438,8 @@ bool Instance::loadAgents(const nav2_costmap_2d::Costmap2D* costmap_, std::vecto
 	{
 		start_locations[agent.id] = costmap_->getIndex(agent.start_x, agent.start_y);
 		goal_locations[agent.id] = costmap_->getIndex(agent.goal_x, agent.goal_y);
+		std::cout << "Agent created" << std::endl;
+		std::cout << start_locations[agent.id] << "  " << goal_locations[agent.id] << std::endl;
 	}
 	num_of_agents = agents_.size();
 	return true;
@@ -483,6 +485,7 @@ bool Instance::loadMap(const nav2_costmap_2d::Costmap2D* costmap_)
 		
 		
 			my_map[i] = costmap_->getCost(i) > 0 ? 1 : 0;
+			std::cout << my_map[i] << std::endl;
 	
 	}
 	return true;

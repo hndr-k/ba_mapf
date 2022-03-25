@@ -258,7 +258,7 @@ void eecbs_server::control_callback() {
         cbs.clearSearchEngines();
     }
 
-
+  
     if (true) {
 
     } else {
@@ -286,6 +286,7 @@ eecbs_server::on_configure(const rclcpp_lifecycle::State &state) {
   costmap_ros_->on_configure(state);
   costmap_ = costmap_ros_->getLayeredCostmap()->getCostmap();
   RCLCPP_INFO(this->get_logger(), "Done configuring!");
+  std::cout << __LINE__ << std::endl;
 
   //      planning_thread = std::thread(&eecbs_server::control_callback, this);
   return nav2_util::CallbackReturn::SUCCESS;
@@ -298,12 +299,14 @@ eecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   //      plan_publisher_->on_activate();
   //      action_server_pose_->activate();
   //      action_server_poses_->activate();
+  std::cout << __LINE__ << std::endl;
   costmap_ros_->on_activate(state);
   //      std::chrono::duration<double> period;
   //      period = std::chrono::milliseconds(100);
   //      timer_ = this->create_wall_timer(period,
   //      std::bind(&mapf_action_server::eecbs_server::control_callback, this));
   //      planning_thread.detach();
+  std::cout << __LINE__ << std::endl;
   RCLCPP_INFO(this->get_logger(), "Done activating!");
   //
   //      PlannerMap::iterator it;
@@ -312,10 +315,10 @@ eecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   //      }
 
   // create bond connection
-
+  std::cout << __LINE__ << std::endl;
   createBond();
-
-
+  std::cout << __LINE__ << std::endl;
+   Instance instance(costmap_, agents, 0);
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
@@ -419,15 +422,16 @@ void eecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
 void eecbs_server::path_response(
     const std::shared_ptr<mapf_actions::srv::Mapf::Request> request,
     std::shared_ptr<mapf_actions::srv::Mapf::Response> response) {
-
+  std::cout << __LINE__ << std::endl;
   bool agent_missing = true;
-
+  
+  std::cout << __LINE__ << std::endl;
 
   RCLCPP_INFO(this->get_logger(), "New request: %f %f -> %f %f!",
               request->start.pose.position.x, request->start.pose.position.y,
               request->goal.pose.position.x, request->goal.pose.position.y);
 
-
+    std::cout << __LINE__ << std::endl;
   for (auto &agent : agents) {
 
     if (agent.id == request->robotino_id) {
@@ -440,11 +444,13 @@ void eecbs_server::path_response(
 
     }
   }
+    std::cout << __LINE__ << std::endl;
   if (agent_missing) {
   //  RCLCPP_INFO(this->get_logger(), "Creating agent.");
     create_agent(request->start, request->goal, 0, 0, request->robotino_id);
   //  RCLCPP_INFO(this->get_logger(), "Agent created!");
   }
+    std::cout << __LINE__ << std::endl;
 
 
 
@@ -455,7 +461,6 @@ nav_msgs::msg::Path path_;
 
   path_.header.stamp = this->get_clock().get()->now();
 
-  control_callback();
 
   //	while  (needs_replan_ == true) {
   //            loop_rate.sleep();

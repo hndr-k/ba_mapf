@@ -103,18 +103,18 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 # Install launch files.
-#install(DIRECTORY
-#  launch
-#  DESTINATION share/${PROJECT_NAME}/
-#)
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
 # Install map files.
-#install(DIRECTORY
-#  maps
-#  DESTINATION share/${PROJECT_NAME}/
-#)
+install(DIRECTORY
+  maps
+  DESTINATION share/${PROJECT_NAME}/
+)
 # Install param files.
-#install(DIRECTORY
-#  params
-#  DESTINATION share/${PROJECT_NAME}/
-#)
+install(DIRECTORY
+  params
+  DESTINATION share/${PROJECT_NAME}/
+)
 ament_package()

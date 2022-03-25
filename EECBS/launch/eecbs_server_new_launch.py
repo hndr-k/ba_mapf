@@ -35,7 +35,7 @@ def generate_launch_description():
             name='eecbs_server',
             executable= 'eecbs_server',
             output= 'screen',
-            #prefix=['xterm -e gdb -ex run --args'],
+            prefix=['xterm -e gdb -ex run --args'],
             parameters= [params_path]),
 
         # TODO: the following needs to be used properly
