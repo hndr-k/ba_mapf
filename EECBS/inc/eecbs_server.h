@@ -108,7 +108,7 @@ heuristics_type h;
 heuristics_type h_hat; // inadmissible heuristics
 conflict_selection conflict;
 node_selection n ;
-Instance instance;
+//Instance instance;
 std::vector<rosAgent> agents;
 std::vector<rosPath> paths;
 

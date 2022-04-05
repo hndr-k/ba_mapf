@@ -13,12 +13,122 @@ eecbs_server::eecbs_server(const rclcpp::NodeOptions &options)
   //        this->create_subscription<nav_msgs::msg::OccupancyGrid>("global_costmap/costmap",
   //        10, std::bind(&eecbs_server::occ_grid_callback, this,
   //        std::placeholders::_1));
+  RCLCPP_INFO(this->get_logger(), "Constructing!");
   service_ = this->create_service<mapf_actions::srv::Mapf>(
       "/off_field/mapf_plan",
       std::bind(&eecbs_server::path_response, this, std::placeholders::_1,
                 std::placeholders::_2));
   
 
+    RCLCPP_INFO(this->get_logger(), "Init!");
+  std::cout << "eecbs_server" << __LINE__ << std::endl;
+	desc.add_options()
+		("help", "produce help message")
+
+		// params for the input instance and experiment settings
+
+		("output,o", boost::program_options::value<string>(), "output file for statistics")
+		("outputPaths", boost::program_options::value<string>(), "output file for paths")
+		("agentNum,k", boost::program_options::value<int>()->default_value(0), "number of agents")
+		("cutoffTime,t", boost::program_options::value<double>()->default_value(7200), "cutoff time (seconds)")
+		("screen,s", boost::program_options::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
+		("stats", boost::program_options::value<bool>()->default_value(false), "write to files some detailed statistics")
+
+		// params for CBS node selection strategies
+		("highLevelSolver", boost::program_options::value<string>()->default_value("EES"), "the high-level solver (A*, A*eps, EES, NEW)")
+		("lowLevelSolver", boost::program_options::value<bool>()->default_value(true), "using suboptimal solver in the low level")
+		("inadmissibleH", boost::program_options::value<string>()->default_value("Global"), "inadmissible heuristics (Zero, Global, Path, Local, Conflict)")
+		("suboptimality", boost::program_options::value<double>()->default_value(1.2), "suboptimality bound")
+
+		// params for CBS improvement
+		("heuristics", boost::program_options::value<string>()->default_value("WDG"), "admissible heuristics for the high-level search (Zero, CG,DG, WDG)")
+		("prioritizingConflicts", boost::program_options::value<bool>()->default_value(true), "conflict prioirtization. If true, conflictSelection is used as a tie-breaking rule.")
+		("bypass", boost::program_options::value<bool>()->default_value(true), "Bypass1")
+		("disjointSplitting", boost::program_options::value<bool>()->default_value(false), "disjoint splitting")
+		("rectangleReasoning", boost::program_options::value<bool>()->default_value(true), "rectangle reasoning")
+		("corridorReasoning", boost::program_options::value<bool>()->default_value(true), "corridor reasoning")
+		("targetReasoning", boost::program_options::value<bool>()->default_value(true), "target reasoning")
+		("restart", boost::program_options::value<int>()->default_value(0), "rapid random restart times")
+		;
+ RCLCPP_INFO(this->get_logger(), "Parameters done!");
+	if (vm.count("help")) {
+		std::cout << desc << std::endl;
+		
+	} 
+ char* test[] = {
+   NULL
+ };
+  boost::program_options::store(boost::program_options::parse_command_line(0, test, desc), vm);
+	boost::program_options::notify(vm);
+	if (vm["suboptimality"].as<double>() < 1)
+	{
+		std::cerr << "Suboptimal bound should be at least 1!" << std::endl;
+
+	}
+
+	
+	if (vm["highLevelSolver"].as<string>() == "A*")
+		s = high_level_solver_type::ASTAR;
+	else if (vm["highLevelSolver"].as<string>() == "A*eps")
+		s = high_level_solver_type::ASTAREPS;
+	else if (vm["highLevelSolver"].as<string>() == "EES")
+		s = high_level_solver_type::EES;
+	else if (vm["highLevelSolver"].as<string>() == "NEW")
+		s = high_level_solver_type::NEW;
+	else
+	{
+		std::cout << "WRONG high level solver!" << std::endl;
+		
+	}
+
+	if (s == high_level_solver_type::ASTAR && vm["suboptimality"].as<double>() > 1)
+	{
+		std::cerr << "A* cannot perform suboptimal search!" << std::endl;
+		
+	}
+
+
+	if (vm["heuristics"].as<string>() == "Zero")
+		h = heuristics_type::ZERO;
+	else if (vm["heuristics"].as<string>() == "CG")
+		h = heuristics_type::CG;
+	else if (vm["heuristics"].as<string>() == "DG")
+		h = heuristics_type::DG;
+	else if (vm["heuristics"].as<string>() == "WDG")
+		h = heuristics_type::WDG;
+	else
+	{
+		std::cout << "WRONG heuristics strategy!" << std::endl;
+		
+	}
+
+    if ((h == heuristics_type::CG || h == heuristics_type::DG) && vm["lowLevelSolver"].as<bool>())
+    {
+        std::cerr << "CG or DG heuristics do not work with low level of suboptimal search!" << std::endl;
+        
+    }
+
+
+	if (s == high_level_solver_type::ASTAR ||
+	    s == high_level_solver_type::ASTAREPS ||
+	    vm["inadmissibleH"].as<string>() == "Zero")
+		h_hat = heuristics_type::ZERO;
+	else if (vm["inadmissibleH"].as<string>() == "Global")
+		h_hat = heuristics_type::GLOBAL;
+	else if (vm["inadmissibleH"].as<string>() == "Path")
+		h_hat = heuristics_type::PATH;
+	else if (vm["inadmissibleH"].as<string>() == "Local")
+		h_hat = heuristics_type::LOCAL;
+	else if (vm["inadmissibleH"].as<string>() == "Conflict")
+		h_hat = heuristics_type::CONFLICT;
+	else
+	{
+		std::cout << "WRONG inadmissible heuristics strategy!" << std::endl;
+	
+	}
+
+	conflict = conflict_selection::EARLIEST;
+	n = node_selection::NODE_CONFLICTPAIRS;
 
   RCLCPP_INFO(this->get_logger(), "MAPF server initialized");
 }
@@ -54,152 +164,62 @@ void eecbs_server::init() {
 
 	// Declare the supported options.
 
-	desc.add_options()
-		("help", "produce help message")
-
-		// params for the input instance and experiment settings
-		("map,m", boost::program_options::value<string>()->required(), "input file for map")
-		("agents,a", boost::program_options::value<string>()->required(), "input file for agents")
-		("output,o", boost::program_options::value<string>(), "output file for statistics")
-		("outputPaths", boost::program_options::value<string>(), "output file for paths")
-		("agentNum,k", boost::program_options::value<int>()->default_value(0), "number of agents")
-		("cutoffTime,t", boost::program_options::value<double>()->default_value(7200), "cutoff time (seconds)")
-		("screen,s", boost::program_options::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
-		("stats", boost::program_options::value<bool>()->default_value(false), "write to files some detailed statistics")
-
-		// params for CBS node selection strategies
-		("highLevelSolver", boost::program_options::value<string>()->default_value("EES"), "the high-level solver (A*, A*eps, EES, NEW)")
-		("lowLevelSolver", boost::program_options::value<bool>()->default_value(true), "using suboptimal solver in the low level")
-		("inadmissibleH", boost::program_options::value<string>()->default_value("Global"), "inadmissible heuristics (Zero, Global, Path, Local, Conflict)")
-		("suboptimality", boost::program_options::value<double>()->default_value(1.2), "suboptimality bound")
-
-		// params for CBS improvement
-		("heuristics", boost::program_options::value<string>()->default_value("WDG"), "admissible heuristics for the high-level search (Zero, CG,DG, WDG)")
-		("prioritizingConflicts", boost::program_options::value<bool>()->default_value(true), "conflict prioirtization. If true, conflictSelection is used as a tie-breaking rule.")
-		("bypass", boost::program_options::value<bool>()->default_value(true), "Bypass1")
-		("disjointSplitting", boost::program_options::value<bool>()->default_value(false), "disjoint splitting")
-		("rectangleReasoning", boost::program_options::value<bool>()->default_value(true), "rectangle reasoning")
-		("corridorReasoning", boost::program_options::value<bool>()->default_value(true), "corridor reasoning")
-		("targetReasoning", boost::program_options::value<bool>()->default_value(true), "target reasoning")
-		("restart", boost::program_options::value<int>()->default_value(0), "rapid random restart times")
-		;
- 
-	if (vm.count("help")) {
-		cout << desc << endl;
-		
-	} 
- char* test[] = {
-   NULL
- };
-  boost::program_options::store(boost::program_options::parse_command_line(0, test, desc), vm);
-	boost::program_options::notify(vm);
-	if (vm["suboptimality"].as<double>() < 1)
-	{
-		cerr << "Suboptimal bound should be at least 1!" << endl;
-
-	}
-
-	
-	if (vm["highLevelSolver"].as<string>() == "A*")
-		s = high_level_solver_type::ASTAR;
-	else if (vm["highLevelSolver"].as<string>() == "A*eps")
-		s = high_level_solver_type::ASTAREPS;
-	else if (vm["highLevelSolver"].as<string>() == "EES")
-		s = high_level_solver_type::EES;
-	else if (vm["highLevelSolver"].as<string>() == "NEW")
-		s = high_level_solver_type::NEW;
-	else
-	{
-		cout << "WRONG high level solver!" << endl;
-		
-	}
-
-	if (s == high_level_solver_type::ASTAR && vm["suboptimality"].as<double>() > 1)
-	{
-		cerr << "A* cannot perform suboptimal search!" << endl;
-		
-	}
-
-
-	if (vm["heuristics"].as<string>() == "Zero")
-		h = heuristics_type::ZERO;
-	else if (vm["heuristics"].as<string>() == "CG")
-		h = heuristics_type::CG;
-	else if (vm["heuristics"].as<string>() == "DG")
-		h = heuristics_type::DG;
-	else if (vm["heuristics"].as<string>() == "WDG")
-		h = heuristics_type::WDG;
-	else
-	{
-		cout << "WRONG heuristics strategy!" << endl;
-		
-	}
-
-    if ((h == heuristics_type::CG || h == heuristics_type::DG) && vm["lowLevelSolver"].as<bool>())
-    {
-        cerr << "CG or DG heuristics do not work with low level of suboptimal search!" << endl;
-        
-    }
-
-
-	if (s == high_level_solver_type::ASTAR ||
-	    s == high_level_solver_type::ASTAREPS ||
-	    vm["inadmissibleH"].as<string>() == "Zero")
-		h_hat = heuristics_type::ZERO;
-	else if (vm["inadmissibleH"].as<string>() == "Global")
-		h_hat = heuristics_type::GLOBAL;
-	else if (vm["inadmissibleH"].as<string>() == "Path")
-		h_hat = heuristics_type::PATH;
-	else if (vm["inadmissibleH"].as<string>() == "Local")
-		h_hat = heuristics_type::LOCAL;
-	else if (vm["inadmissibleH"].as<string>() == "Conflict")
-		h_hat = heuristics_type::CONFLICT;
-	else
-	{
-		cout << "WRONG inadmissible heuristics strategy!" << endl;
-	
-	}
-
-	conflict = conflict_selection::EARLIEST;
-	n = node_selection::NODE_CONFLICTPAIRS;
-
 }
 
 void eecbs_server::control_callback() {
   //	while (rclcpp::ok())
   //	{
-  RCLCPP_INFO(this->get_logger(), "%u", __LINE__);
+  std::cout << "eecbs_server" << __LINE__ << std::endl;
 
   if (costmap_ros_ != nullptr && costmap_ != nullptr) {
+    std::cout << "eecbs_server" << __LINE__ << std::endl;
     //               if (costmap_ros_->get_current_state().id() ==
     //               lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
-  Instance instance(costmap_, agents);
-
+  Instance instance(costmap_, agents );
+  std::cout << "eecbs_server" << __LINE__ << std::endl;
+  std::cout << vm["inadmissibleH"].as<string>() << std::endl;
+    std::cout << "eecbs_server" << __LINE__ << std::endl;
 	srand(0);
 	int runs = 1 + vm["restart"].as<int>();
+  std::cout << "eecbs_server" << __LINE__ << std::endl;
 	//////////////////////////////////////////////////////////////////////
     // initialize the solver
 	if (vm["lowLevelSolver"].as<bool>())
     {
+      std::cout << "eecbs_server" << __LINE__ << std::endl;
         ECBS ecbs(instance, false, vm["screen"].as<int>());
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setPrioritizeConflicts(vm["prioritizingConflicts"].as<bool>());
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setDisjointSplitting(vm["disjointSplitting"].as<bool>());
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setBypass(vm["bypass"].as<bool>());
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setRectangleReasoning(vm["rectangleReasoning"].as<bool>());
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setCorridorReasoning(vm["corridorReasoning"].as<bool>());
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setHeuristicType(h, h_hat);
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setTargetReasoning(vm["targetReasoning"].as<bool>());
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setMutexReasoning(false);
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setConflictSelectionRule(conflict);
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setNodeSelectionRule(n);
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setSavingStats(vm["stats"].as<bool>());
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.setHighLevelSolver(s, vm["suboptimality"].as<double>());
         //////////////////////////////////////////////////////////////////////
         // run
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         double runtime = 0;
         int lowerbound = 0;
         for (int i = 0; i < runs; i++)
         {
+          std::cout << "eecbs_server" << __LINE__ << std::endl;
             ecbs.clear();
             ecbs.solve(vm["cutoffTime"].as<double>() / runs, lowerbound);
             runtime += ecbs.runtime;
@@ -207,8 +227,10 @@ void eecbs_server::control_callback() {
                 break;
             lowerbound = ecbs.getLowerBound();
             ecbs.randomRoot = true;
-            cout << "Failed to find solutions in Run " << i << endl;
+            std::cout << "Failed to find solutions in Run " << i << std::endl;
+            std::cout << "eecbs_server" << __LINE__ << std::endl;
         }
+        std::cout << "eecbs_server" << __LINE__ << std::endl;
         ecbs.runtime = runtime;
         //if (vm.count("output"))
         //    ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
@@ -223,6 +245,7 @@ void eecbs_server::control_callback() {
     }
     else
     {
+      std::cout << "eecbs_server" << __LINE__ << std::endl;
         CBS cbs(instance, false, vm["screen"].as<int>());
         cbs.setPrioritizeConflicts(vm["prioritizingConflicts"].as<bool>());
         cbs.setDisjointSplitting(vm["disjointSplitting"].as<bool>());
@@ -242,6 +265,7 @@ void eecbs_server::control_callback() {
         int lowerbound = 0;
         for (int i = 0; i < runs; i++)
         {
+          std::cout << "eecbs_server" << __LINE__ << std::endl;
             cbs.clear();
             cbs.solve(vm["cutoffTime"].as<double>() / runs, lowerbound);
             runtime += cbs.runtime;
@@ -249,7 +273,7 @@ void eecbs_server::control_callback() {
                 break;
             lowerbound = cbs.getLowerBound();
             cbs.randomRoot = true;
-            cout << "Failed to find solutions in Run " << i << endl;
+            std::cout << "Failed to find solutions in Run " << i << std::endl;
         }
         cbs.runtime = runtime;
         
@@ -257,6 +281,7 @@ void eecbs_server::control_callback() {
             paths = cbs.savePaths();
         cbs.clearSearchEngines();
     }
+    std::cout << "eecbs_server" << __LINE__ << std::endl;
 
   
     if (true) {
@@ -318,7 +343,7 @@ eecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   std::cout << __LINE__ << std::endl;
   createBond();
   std::cout << __LINE__ << std::endl;
-   Instance instance(costmap_, agents, 0);
+
   return nav2_util::CallbackReturn::SUCCESS;
 }
 

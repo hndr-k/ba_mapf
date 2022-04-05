@@ -244,7 +244,7 @@ planner_server:
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_mapf_planner/MapfPlanner"
-      id: 2
+      id: 1
 
 
 planner_server_rclcpp_node:

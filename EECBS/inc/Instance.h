@@ -38,6 +38,7 @@ public:
 
 		inline int getManhattanDistance(int loc1, int loc2) const
 		{
+
 			int loc1_x = getRowCoordinate(loc1);
 			int loc1_y = getColCoordinate(loc1);
 			int loc2_x = getRowCoordinate(loc2);

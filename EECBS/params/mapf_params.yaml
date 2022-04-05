@@ -1,14 +1,3 @@
-mapf_server:
-  ros__parameters:
-    precision: 0.0000001
-    focal_weight: 1.0
-    agent_size: 0.55
-    timelimit: 30
-    connectedness: 3
-    use_cardinal: true
-    hlh_type: 2
-    use_disjoint_splitting: true
-
 mapf_costmap:
   mapf_costmap:
     ros__parameters:
@@ -22,6 +11,7 @@ mapf_costmap:
       track_unknown_space: true
       plugins: ["static_layer"]
       static_layer:
+        resolution: 0.5
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
         map_topic: "/mapf_map"

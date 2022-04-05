@@ -1493,20 +1493,32 @@ CBS::CBS(const Instance& instance, bool sipp, int screen) :
 	corridor_helper(search_engines, initial_constraints),
 	heuristic_helper(instance.getDefaultNumberOfAgents(), paths, search_engines, initial_constraints, mdd_helper)
 {
+	std::cout << "CBS " << __LINE__ << std::endl;
 	clock_t t = clock();
+	std::cout << "CBS " << __LINE__ << std::endl;
 	initial_constraints.resize(num_of_agents, 
 		ConstraintTable(instance.num_of_cols, instance.map_size));
-
+	std::cout << "CBS " << __LINE__ << std::endl;
 	search_engines.resize(num_of_agents);
+	std::cout << "CBS " << __LINE__ << std::endl;
+	std::cout << "CBS " << num_of_agents << std::endl;
+	std::cout << "CBS " << instance.map_size << std::endl;
 	for (int i = 0; i < num_of_agents; i++)
 	{
 		if (sipp)
+		{
+			std::cout << "CBS " << __LINE__ << std::endl;
 			search_engines[i] = new SIPP(instance, i);
+		}
 		else
+		{
+			std::cout << "CBS " << __LINE__ << std::endl;
 			search_engines[i] = new SpaceTimeAStar(instance, i);
+		}
 
 		initial_constraints[i].goal_location = search_engines[i]->goal_location;
 	}
+	std::cout << "CBS " << __LINE__ << std::endl;
 	runtime_preprocessing = (double)(clock() - t) / CLOCKS_PER_SEC;
 
 	mutex_helper.search_engines = search_engines;

@@ -289,9 +289,7 @@ void CCBS::path_response(
 
   nav_msgs::msg::Path path_;
   path_.header.frame_id = "map";
-  clock_ = get_clock();
-  path_.header.stamp = clock_->now();
-
+  path_.header.stamp = this->get_clock().get()->now();
   control_callback();
 
   //	while  (needs_replan_ == true) {
