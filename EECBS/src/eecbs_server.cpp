@@ -21,7 +21,7 @@ eecbs_server::eecbs_server(const rclcpp::NodeOptions &options)
   
 
     RCLCPP_INFO(this->get_logger(), "Init!");
-  std::cout << "eecbs_server" << __LINE__ << std::endl;
+  
 	desc.add_options()
 		("help", "produce help message")
 
@@ -169,57 +169,57 @@ void eecbs_server::init() {
 void eecbs_server::control_callback() {
   //	while (rclcpp::ok())
   //	{
-  std::cout << "eecbs_server" << __LINE__ << std::endl;
+  
 
   if (costmap_ros_ != nullptr && costmap_ != nullptr) {
-    std::cout << "eecbs_server" << __LINE__ << std::endl;
+    
     //               if (costmap_ros_->get_current_state().id() ==
     //               lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
   Instance instance(costmap_, agents );
-  std::cout << "eecbs_server" << __LINE__ << std::endl;
-  std::cout << vm["inadmissibleH"].as<string>() << std::endl;
-    std::cout << "eecbs_server" << __LINE__ << std::endl;
+  
+
+    
 	srand(0);
 	int runs = 1 + vm["restart"].as<int>();
-  std::cout << "eecbs_server" << __LINE__ << std::endl;
+  
 	//////////////////////////////////////////////////////////////////////
     // initialize the solver
 	if (vm["lowLevelSolver"].as<bool>())
     {
-      std::cout << "eecbs_server" << __LINE__ << std::endl;
+      
         ECBS ecbs(instance, false, vm["screen"].as<int>());
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setPrioritizeConflicts(vm["prioritizingConflicts"].as<bool>());
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setDisjointSplitting(vm["disjointSplitting"].as<bool>());
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setBypass(vm["bypass"].as<bool>());
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setRectangleReasoning(vm["rectangleReasoning"].as<bool>());
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setCorridorReasoning(vm["corridorReasoning"].as<bool>());
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setHeuristicType(h, h_hat);
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setTargetReasoning(vm["targetReasoning"].as<bool>());
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setMutexReasoning(false);
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setConflictSelectionRule(conflict);
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setNodeSelectionRule(n);
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setSavingStats(vm["stats"].as<bool>());
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.setHighLevelSolver(s, vm["suboptimality"].as<double>());
         //////////////////////////////////////////////////////////////////////
         // run
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         double runtime = 0;
         int lowerbound = 0;
         for (int i = 0; i < runs; i++)
         {
-          std::cout << "eecbs_server" << __LINE__ << std::endl;
+          
             ecbs.clear();
             ecbs.solve(vm["cutoffTime"].as<double>() / runs, lowerbound);
             runtime += ecbs.runtime;
@@ -228,14 +228,17 @@ void eecbs_server::control_callback() {
             lowerbound = ecbs.getLowerBound();
             ecbs.randomRoot = true;
             std::cout << "Failed to find solutions in Run " << i << std::endl;
-            std::cout << "eecbs_server" << __LINE__ << std::endl;
+            
         }
-        std::cout << "eecbs_server" << __LINE__ << std::endl;
+        
         ecbs.runtime = runtime;
         //if (vm.count("output"))
         //    ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
-        if (ecbs.solution_found && vm.count("outputPaths"))
+        if (ecbs.solution_found)
+        {
+          std::cout << "Solution found!" << std::endl;
             paths = ecbs.savePaths();
+        }
         /*size_t pos = vm["output"].as<string>().rfind('.');      // position of the file extension
         string output_name = vm["output"].as<string>().substr(0, pos);     // get the name without extension
         cbs.saveCT(output_name); // for debug*/
@@ -245,7 +248,7 @@ void eecbs_server::control_callback() {
     }
     else
     {
-      std::cout << "eecbs_server" << __LINE__ << std::endl;
+      
         CBS cbs(instance, false, vm["screen"].as<int>());
         cbs.setPrioritizeConflicts(vm["prioritizingConflicts"].as<bool>());
         cbs.setDisjointSplitting(vm["disjointSplitting"].as<bool>());
@@ -265,7 +268,7 @@ void eecbs_server::control_callback() {
         int lowerbound = 0;
         for (int i = 0; i < runs; i++)
         {
-          std::cout << "eecbs_server" << __LINE__ << std::endl;
+          
             cbs.clear();
             cbs.solve(vm["cutoffTime"].as<double>() / runs, lowerbound);
             runtime += cbs.runtime;
@@ -277,11 +280,15 @@ void eecbs_server::control_callback() {
         }
         cbs.runtime = runtime;
         
-        if (cbs.solution_found && vm.count("outputPaths"))
+        if (cbs.solution_found)
+        {
+          std::cout << "Solution found!" << std::endl;
             paths = cbs.savePaths();
+        }
+
         cbs.clearSearchEngines();
     }
-    std::cout << "eecbs_server" << __LINE__ << std::endl;
+    
 
   
     if (true) {
@@ -311,7 +318,7 @@ eecbs_server::on_configure(const rclcpp_lifecycle::State &state) {
   costmap_ros_->on_configure(state);
   costmap_ = costmap_ros_->getLayeredCostmap()->getCostmap();
   RCLCPP_INFO(this->get_logger(), "Done configuring!");
-  std::cout << __LINE__ << std::endl;
+  
 
   //      planning_thread = std::thread(&eecbs_server::control_callback, this);
   return nav2_util::CallbackReturn::SUCCESS;
@@ -324,14 +331,14 @@ eecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   //      plan_publisher_->on_activate();
   //      action_server_pose_->activate();
   //      action_server_poses_->activate();
-  std::cout << __LINE__ << std::endl;
+  
   costmap_ros_->on_activate(state);
   //      std::chrono::duration<double> period;
   //      period = std::chrono::milliseconds(100);
   //      timer_ = this->create_wall_timer(period,
   //      std::bind(&mapf_action_server::eecbs_server::control_callback, this));
   //      planning_thread.detach();
-  std::cout << __LINE__ << std::endl;
+  
   RCLCPP_INFO(this->get_logger(), "Done activating!");
   //
   //      PlannerMap::iterator it;
@@ -340,9 +347,9 @@ eecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   //      }
 
   // create bond connection
-  std::cout << __LINE__ << std::endl;
+  
   createBond();
-  std::cout << __LINE__ << std::endl;
+  
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
@@ -447,16 +454,16 @@ void eecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
 void eecbs_server::path_response(
     const std::shared_ptr<mapf_actions::srv::Mapf::Request> request,
     std::shared_ptr<mapf_actions::srv::Mapf::Response> response) {
-  std::cout << __LINE__ << std::endl;
+  
   bool agent_missing = true;
   
-  std::cout << __LINE__ << std::endl;
+  
 
   RCLCPP_INFO(this->get_logger(), "New request: %f %f -> %f %f!",
               request->start.pose.position.x, request->start.pose.position.y,
               request->goal.pose.position.x, request->goal.pose.position.y);
 
-    std::cout << __LINE__ << std::endl;
+    
   for (auto &agent : agents) {
 
     if (agent.id == request->robotino_id) {
@@ -469,13 +476,13 @@ void eecbs_server::path_response(
 
     }
   }
-    std::cout << __LINE__ << std::endl;
+    
   if (agent_missing) {
   //  RCLCPP_INFO(this->get_logger(), "Creating agent.");
     create_agent(request->start, request->goal, 0, 0, request->robotino_id);
   //  RCLCPP_INFO(this->get_logger(), "Agent created!");
   }
-    std::cout << __LINE__ << std::endl;
+    
 
 
 

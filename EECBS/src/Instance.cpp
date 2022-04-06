@@ -50,18 +50,18 @@ Instance::Instance(const nav2_costmap_2d::Costmap2D* costmap_, std::vector<rosAg
 	num_of_agents = agents_.size();
 	std::cout << "Instance" << std::endl;
 	bool succ = loadMap(costmap_);
-	std::cout << "Instance " << __LINE__ << std::endl;
+	//std::cout << "Instance " << __LINE__ << std::endl;
 	if (!succ)
 	{
 		std::cout << "Costmap could not be used as a map!" << std::endl;
 	}
-	std::cout << "Instance " << __LINE__ << std::endl;
+	//std::cout << "Instance " << __LINE__ << std::endl;
 	succ = loadAgents(costmap_, agents_);
 	if (!succ)
 	{
 		std::cout << "Agents could not be used as agents!" << std::endl;
 	}
-	std::cout << "Instance " << __LINE__ << std::endl;
+	//std::cout << "Instance " << __LINE__ << std::endl;
 
 }
 
@@ -162,12 +162,12 @@ void Instance::generateRandomAgents(int warehouse_width)
 bool Instance::validMove(int curr, int next) const
 {
 	if (next < 0 || next >= map_size)
-	{	std::cout << "Instance " << __LINE__ << std::endl;
+	{	//std::cout << "Instance " << __LINE__ << std::endl;
 		return false;
 	}
 	if (my_map[next])
 	{
-		std::cout << "Instance " << __LINE__ << std::endl;
+		//std::cout << "Instance " << __LINE__ << std::endl;
 
 		return false;
 	}
@@ -446,7 +446,8 @@ bool Instance::loadAgents()
 
 bool Instance::loadAgents(const nav2_costmap_2d::Costmap2D* costmap_, std::vector<rosAgent> agents_)
 {
-	std::cout << "Instance " << __LINE__ << std::endl;
+	//std::cout << "Instance " << __LINE__ << std::endl;
+	num_of_agents = agents_.size();
 	for (auto &agent : agents_)
 	{
 		std::cout << agent.id << std::endl;
@@ -455,10 +456,10 @@ bool Instance::loadAgents(const nav2_costmap_2d::Costmap2D* costmap_, std::vecto
 		start_locations[agent.id] = costmap_->getIndex(agent.start_x, agent.start_y);
 		goal_locations[agent.id] = costmap_->getIndex(agent.goal_x, agent.goal_y);
 		std::cout << "Agent created" << std::endl;
-		std::cout << "check " << start_locations[agent.id] << "  " << goal_locations[agent.id] << std::endl;
+		std::cout << "Agent locations " << start_locations[agent.id] << "  " << goal_locations[agent.id] << std::endl;
 	}
-	num_of_agents = agents_.size();
-	std::cout << "Instance " << __LINE__ << std::endl;
+
+	//std::cout << "Instance " << __LINE__ << std::endl;
 	return true;
 }
 
@@ -491,14 +492,16 @@ void Instance::saveAgents() const
 
 bool Instance::loadMap(const nav2_costmap_2d::Costmap2D* costmap_)
 {
-    std::cout << "Instance " << __LINE__ << std::endl;
+    ////std::cout << "Instance " << __LINE__ << std::endl; 
     int height = costmap_->getSizeInCellsY();
     int width = costmap_->getSizeInCellsX();
-	std::cout << "Instance " << __LINE__ << std::endl;
+	//std::cout << "Instance " << __LINE__ << std::endl;
     std::cout << height << " " << width << std::endl;
 	map_size = height * width;
+	num_of_cols = width;
+	num_of_rows = height;
 	my_map.resize(map_size, false);
-	std::cout << "Instance " << __LINE__ << std::endl;
+	//std::cout << "Instance " << __LINE__ << std::endl;
 	// read map (and start/goal locations)
 	for (int i = 0; i < map_size; i++) {
 		
@@ -514,18 +517,18 @@ bool Instance::loadMap(const nav2_costmap_2d::Costmap2D* costmap_)
 list<int> Instance::getNeighbors(int curr) const
 {
 	list<int> neighbors;
-	std::cout << "Instance " << __LINE__ << std::endl;
+	//std::cout << "Instance " << __LINE__ << std::endl;
 	int candidates[4] = {curr + 1, curr - 1, curr + num_of_cols, curr - num_of_cols};
-	std::cout << "Instance " << __LINE__ << std::endl;
+	//std::cout << "Instance " << __LINE__ << std::endl;
 	for (int next : candidates)
 	{
-		std::cout << "Instance " << __LINE__ << std::endl;
+		//std::cout << "Instance " << __LINE__ << std::endl;
 		if (validMove(curr, next))
 		{
-			std::cout << "Instance " << __LINE__ << std::endl;
+			//std::cout << "Instance " << __LINE__ << std::endl;
 			neighbors.emplace_back(next);
 		}
 	}
-	std::cout << "Instance " << __LINE__ << std::endl;
+	//std::cout << "Instance " << __LINE__ << std::endl;
 	return neighbors;
 }
