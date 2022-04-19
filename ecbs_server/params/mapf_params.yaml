@@ -1,0 +1,34 @@
+mapf_costmap:
+  mapf_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: map
+      use_sim_time: False
+      robot_radius: 0.3
+      resolution: 0.05
+      track_unknown_space: true
+      plugins: ["static_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+        enabled: true
+        subscribe_to_updates: true
+        transform_tolerance: 0.1
+        map_topic: "/mapf_map"
+      always_send_full_costmap: True
+global_costmap_client:
+  ros__parameters:
+    use_sim_time: False
+global_costmap_rclcpp_node:
+  ros__parameters:
+    use_sim_time: False
+
+
+map_server_mapf:
+  ros__parameters:
+          #yaml_filename: "mapf_map.yaml"
+          #    yaml_filename: "/home/nlimpert/dev/colcon_ws/src/ccbs_server/maps/mapf_map.yaml"
+    yaml_filename: "/home/hendrik/ba_ws/my_map.yaml"
+    topic_name: "/mapf_map"
