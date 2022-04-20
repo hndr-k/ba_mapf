@@ -345,6 +345,7 @@ nav_msgs::msg::Path path_;
   //
   //            RCLCPP_INFO(this->get_logger(), "Wait for path!");
   //	}
+  double x_old, y_old;
   for (auto &path : paths) {
     if (path.robot_id == request->robotino_id) {
       for(int i = 0; i < path.x_poses.size(); i++)
@@ -361,17 +362,23 @@ nav_msgs::msg::Path path_;
         pose_.pose.orientation.z = 1.0;
         pose_.header.frame_id = "map";
         pose_.header.stamp = this->get_clock().get()->now();
-        path_.poses.push_back(pose_);
-        /*int intervall_size = 10;
-        double x_diff = pose_.pose.position.x - path_.poses[i - 1].pose.position.x;
-        double y_diff = pose_.pose.position.y - path_.poses[i - 1].pose.position.y;
+        //path_.poses.push_back(pose_);
+        if(i > 0)
+        {
+        int intervall_size = 4;
+        double x_diff = pose_.pose.position.x - x_old;
+        double y_diff = pose_.pose.position.y - y_old;
         double intervall_x = x_diff / (intervall_size + 1);
         double intervall_y = y_diff / (intervall_size + 1);
         geometry_msgs::msg::PoseStamped pose_new;
+        //std::cout << "x_old " << path_.poses[i-1].pose.position.x << " y_old " << path_.poses[i-1].pose.position.y  << std::endl;
+         
         for (int j = 1; j <= intervall_size; j++) {
+          
           geometry_msgs::msg::PoseStamped pose_new;
-          pose_new.pose.position.x = path_.poses[i - 1].pose.position.x + intervall_x * j;
-          pose_new.pose.position.y = path_.poses[i - 1].pose.position.y + intervall_y * j;
+
+          pose_new.pose.position.x = x_old + intervall_x * j;
+          pose_new.pose.position.y = y_old + intervall_y * j;
           pose_new.pose.position.z = 0.0;
           pose_new.pose.orientation.x = 0.0;
           pose_new.pose.orientation.y = 0.0;
@@ -379,8 +386,19 @@ nav_msgs::msg::Path path_;
           pose_new.pose.orientation.z = 1.0;
           pose_new.header.frame_id = "map";
           pose_new.header.stamp = this->get_clock().get()->now();
+          //std::cout << "x " << pose_new.pose.position.x << " y " << pose_new.pose.position.y << std::endl;
           path_.poses.push_back(pose_new);
-          }*/
+          }
+          //std::cout << "x_new " << pose_.pose.position.x << " y_new " << pose_.pose.position.y  << std::endl;
+          x_old = pose_.pose.position.x;
+          y_old = pose_.pose.position.y;
+          path_.poses.push_back(pose_);
+        }
+        else {
+          x_old = pose_.pose.position.x;
+          y_old = pose_.pose.position.y;
+          path_.poses.push_back(pose_);
+        }
 
  //       std::cout << "x: " << x << " y: " << y << std::endl;
         
