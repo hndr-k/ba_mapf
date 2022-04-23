@@ -90,6 +90,7 @@ void ecbs_server::control_callback() {
     std::cout << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
     std::cout << "schedule:" << std::endl;
     paths.resize(solution.size());
+    std::cout << "SIZE " << solution.size() << std::endl;
     for (size_t a = 0; a < solution.size(); ++a) {
       // std::cout << "Solution for: " << a << std::endl;
       // for (size_t i = 0; i < solution[a].actions.size(); ++i) {
@@ -101,7 +102,13 @@ void ecbs_server::control_callback() {
       // solution[a].states.back().first << std::endl;
 
       std::cout << "  agent" << a << ":" << std::endl;
+      paths[a].x_poses.clear();
+      paths[a].y_poses.clear();
+      paths[a].t_step.clear();
       paths[a].robot_id = int(a);
+
+      std::cout << "state size : " << solution[a].states.size() << std::endl;
+      int i = 0;
       for (const auto& state : solution[a].states) {
         std::cout << "    - x: " << state.first.x << std::endl
             << "      y: " << state.first.y << std::endl
@@ -109,7 +116,11 @@ void ecbs_server::control_callback() {
             paths[a].x_poses.push_back(state.first.x);
             paths[a].y_poses.push_back(state.first.y);
             paths[a].t_step.push_back(state.second);
+            std::cout << "iteration: " << i << std::endl;
+            std::cout << "poses path: " << paths[a].x_poses.size() << std::endl;
+            ++i;
       }
+      std::cout << "SIZE IN LOOP " << paths[a].x_poses.size() << std::endl;
     }
     
   } else {
@@ -333,7 +344,7 @@ void ecbs_server::path_response(
 
   control_callback();
 
-nav_msgs::msg::Path path_;
+  nav_msgs::msg::Path path_;
   path_.header.frame_id = "map";
 
   path_.header.stamp = this->get_clock().get()->now();
@@ -350,6 +361,7 @@ nav_msgs::msg::Path path_;
     if (path.robot_id == request->robotino_id) {
       for(int i = 0; i < path.x_poses.size(); i++)
       {
+        std::cout << "SIZE PATH " << path.x_poses.size() << std::endl;
         geometry_msgs::msg::PoseStamped pose_;
         double x, y;
         costmap_->mapToWorld(path.x_poses[i], path.y_poses[i], x, y);
@@ -363,7 +375,7 @@ nav_msgs::msg::Path path_;
         pose_.header.frame_id = "map";
         pose_.header.stamp = this->get_clock().get()->now();
         //path_.poses.push_back(pose_);
-        if(i > 0)
+        /*if(i > 0)
         {
         int intervall_size = 4;
         double x_diff = pose_.pose.position.x - x_old;
@@ -387,25 +399,18 @@ nav_msgs::msg::Path path_;
           pose_new.header.frame_id = "map";
           pose_new.header.stamp = this->get_clock().get()->now();
           //std::cout << "x " << pose_new.pose.position.x << " y " << pose_new.pose.position.y << std::endl;
-          path_.poses.push_back(pose_new);
+          //path_.poses.push_back(pose_new);
           }
           //std::cout << "x_new " << pose_.pose.position.x << " y_new " << pose_.pose.position.y  << std::endl;
           x_old = pose_.pose.position.x;
-          y_old = pose_.pose.position.y;
+          y_old = pose_.pose.position.y;*/
           path_.poses.push_back(pose_);
-        }
-        else {
-          x_old = pose_.pose.position.x;
-          y_old = pose_.pose.position.y;
-          path_.poses.push_back(pose_);
-        }
-
- //       std::cout << "x: " << x << " y: " << y << std::endl;
+        
+          //std::cout << "x: " << x << " y: " << y << std::endl;
         
       }
-      path.x_poses.clear();
-      path.y_poses.clear();
-    }
+
+    
       geometry_msgs::msg::PoseStamped pose_;
       /*nav_msgs::msg::Path path_res;
       if(path_.poses.size() < 10)
@@ -441,9 +446,14 @@ nav_msgs::msg::Path path_;
 //      RCLCPP_INFO(this->get_logger(), "%d size of path", path_.poses.size());
       path_.header.frame_id = "map";
       path_.header.stamp = this->get_clock().get()->now();
+      for(auto pose : path_.poses)
+      {
+        std::cout << "x: " << pose.pose.position.x << "y : " << pose.pose.position.y << std::endl;
+      }
       response->path = path_;
       RCLCPP_INFO(this->get_logger(), "%d size of path",
                   response->path.poses.size());
+    }
     }
   
   RCLCPP_INFO(this->get_logger(), "Passing response!");
