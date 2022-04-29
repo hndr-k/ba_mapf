@@ -68,7 +68,7 @@ def generate_launch_description():
 
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
-        default_value=os.path.join(bringup_dir, 'maps', 'map.yaml'),
+        default_value=os.path.join(bringup_dir, 'maps', 'mymap.yaml'),
         description='Full path to map file to load')
 
     declare_robotino1_params_file_cmd = DeclareLaunchArgument(
