@@ -129,11 +129,11 @@ std::vector<rosAgent> agents;
 std::vector<rosPath> paths;
 
 
-void update_agent(geometry_msgs::msg::PoseStamped start,
+bool update_agent(geometry_msgs::msg::PoseStamped start,
                         geometry_msgs::msg::PoseStamped goal, rosAgent &agent);
 
 
-void create_agent(geometry_msgs::msg::PoseStamped start,
+bool create_agent(geometry_msgs::msg::PoseStamped start,
                         geometry_msgs::msg::PoseStamped goal, int start_id,
                         int goal_id, int robotino_id);
 boost::program_options::options_description desc;

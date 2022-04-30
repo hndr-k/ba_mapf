@@ -189,6 +189,7 @@ ecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
       std::cout << (unsigned int)costmap_->getCost(i, j) << std::endl;
       if(costmap_->getCost(i, j) > 0)
       {
+        std::cout << "x " << i << " < y " << j << std::endl;
         std::cout << (unsigned int)costmap_->getCost(i, j) << std::endl;
         obstacles.insert(Location(i, j));
       }
@@ -258,7 +259,7 @@ nav2_util::CallbackReturn ecbs_server::on_shutdown(const rclcpp_lifecycle::State
 
 
 
-void ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
+bool ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
                         geometry_msgs::msg::PoseStamped goal, int start_id,
                         int goal_id, int robotino_id) {
   /*int resolution = current_grid_.info.resolution;*/
@@ -282,11 +283,28 @@ void ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
   agent_.start_x = start_x;
   agent_.start_y = start_y;
   agent_.id = robotino_id;
+  int curr_agent_size = agents.size();
+  for(int i = 0; i < curr_agent_size; i++)
+  {
+    if(agent_.id != agents[i].id)
+    {
+      if((agent_.start_x == agents[i].start_x) && (agent_.start_y == agents[i].start_y))
+      {
+        return false;
+      }
+      if((agent_.goal_x == agents[i].goal_x) && (agent_.goal_y == agents[i].goal_y))
+      {
+        return false;
+      }
+
+    }
+  }
   agents.push_back(agent_);
+  return true;
 
 }
 
-void ecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
+bool ecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
                         geometry_msgs::msg::PoseStamped goal, rosAgent &agent)
 
 {
@@ -296,13 +314,29 @@ void ecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
                        start_y);
   costmap_->worldToMap(goal.pose.position.x, goal.pose.position.y, goal_x,
                        goal_y);
+  int curr_agent_size = agents.size();
+  for(int i = 0; i < curr_agent_size; i++)
+  {
+    if(agent.id != agents[i].id)
+    {
+      if((start_x == agents[i].start_x) && (start_y == agents[i].start_y))
+      {
+        return false;
+      }
+      if((goal_x == agents[i].goal_x) && (goal_y == agents[i].goal_y))
+      {
+        return false;
+      }
 
+    }
+  }
   agent.goal_x = goal_x;
   agent.goal_y = goal_y;
   agent.start_x = start_x;
   agent.start_y = start_y;
   std::cout << "update: " << agent.start_x << " " << agent.start_y << "  "
             << agent.goal_x << " " << agent.goal_y << "\n";
+  return true;
 
 }
 
@@ -312,7 +346,7 @@ void ecbs_server::path_response(
     std::shared_ptr<mapf_actions::srv::Mapf::Response> response) {
   
   bool agent_missing = true;
-  
+  bool valid_points = false;
   
 
   RCLCPP_INFO(this->get_logger(), "New request: %f %f -> %f %f!",
@@ -326,22 +360,40 @@ void ecbs_server::path_response(
 
       RCLCPP_INFO(this->get_logger(), "Agent id %i update!", agent.id);
 
-      update_agent(request->start, request->goal, agent);
+      if(!update_agent(request->start, request->goal, agent))
+      {
+      nav_msgs::msg::Path path_;
+      path_.header.frame_id = "map";
+
+      path_.header.stamp = this->get_clock().get()->now(); 
+      response->path = path_;
+      RCLCPP_INFO(this->get_logger(), "Either the goal pose or start pose did overlap with other agents!");
+      }
 
       agent_missing = false;
-
+      valid_points = true;
     }
   }
     
   if (agent_missing) {
   //  RCLCPP_INFO(this->get_logger(), "Creating agent.");
-    create_agent(request->start, request->goal, 0, 0, request->robotino_id);
+    if(!create_agent(request->start, request->goal, 0, 0, request->robotino_id))
+    {
+      nav_msgs::msg::Path path_;
+      path_.header.frame_id = "map";
+
+      path_.header.stamp = this->get_clock().get()->now(); 
+      response->path = path_;
+      RCLCPP_INFO(this->get_logger(), "Either the goal pose or start pose did overlap with other agents!");
+    }
+    valid_points = true;
   //  RCLCPP_INFO(this->get_logger(), "Agent created!");
   }
     
 
 
-
+  if(valid_points)
+  {
   control_callback();
 
   nav_msgs::msg::Path path_;
@@ -457,7 +509,7 @@ void ecbs_server::path_response(
     }
   
   RCLCPP_INFO(this->get_logger(), "Passing response!");
-
+  }
     }
   geometry_msgs::msg::PoseStamped ecbs_server::draw_point(double x_1, double y_1,
                                                  double x_2, double y_2,
