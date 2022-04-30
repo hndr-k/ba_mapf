@@ -257,8 +257,27 @@ nav2_util::CallbackReturn ecbs_server::on_shutdown(const rclcpp_lifecycle::State
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
+bool ecbs_server::check_bounds(double start_x, double start_y, double goal_x, double goal_y)
+{
+  if((start_x > costmap_->getSizeInCellsX()) || (start_y > costmap_->getSizeInCellsY()))
+  {
+    return false;
+  }
+  if((goal_x > costmap_->getSizeInCellsX()) || (goal_y > costmap_->getSizeInCellsY()))
+  {
+    return false;
+  }
 
-
+  return true;
+}
+bool ecbs_server::check_obstacle(double start_x, double start_y, double goal_x, double goal_y)
+{
+  if(((unsigned int)costmap_->getCost(start_x, start_y) > 0) || ((unsigned int)costmap_->getCost(goal_x, goal_y) > 0))
+  {
+    return false;
+  }
+  return true;
+}
 bool ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
                         geometry_msgs::msg::PoseStamped goal, int start_id,
                         int goal_id, int robotino_id) {
@@ -299,6 +318,14 @@ bool ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
 
     }
   }
+  if(!check_obstacle(agent_.start_x, agent_.start_y, agent_.goal_x, agent_.goal_y))
+  {
+    return false;
+  }
+  if(!check_bounds(agent_.start_x, agent_.start_y, agent_.goal_x, agent_.goal_y))
+  {
+    return false;
+  }
   agents.push_back(agent_);
   return true;
 
@@ -308,7 +335,7 @@ bool ecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
                         geometry_msgs::msg::PoseStamped goal, rosAgent &agent)
 
 {
-
+  
   uint start_x, start_y, goal_x, goal_y;
   costmap_->worldToMap(start.pose.position.x, start.pose.position.y, start_x,
                        start_y);
@@ -329,6 +356,14 @@ bool ecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
       }
 
     }
+  }
+  if(!check_obstacle(start_x, start_y, goal_x, goal_y))
+  {
+    return false;
+  }
+  if(!check_bounds(start_x, start_y, goal_x, goal_y))
+  {
+    return false;
   }
   agent.goal_x = goal_x;
   agent.goal_y = goal_y;
