@@ -10,6 +10,8 @@ from launch.actions import (DeclareLaunchArgument, GroupAction,
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
+from nav2_common.launch import RewrittenYaml
+
 
 def generate_launch_description():
 
@@ -61,24 +63,17 @@ def generate_launch_description():
             output='screen',
             parameters=[{'autostart': autostart},
                         {'node_names': lifecycle_nodes}]),
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='tf_map_to_mapf_offset',
+            output='screen',
+            arguments = ["0.5", "0.5", "0", "0", "0", "0", "map", "mapf_offset"],
+            parameters=[{'autostart': autostart},
+                        {'node_names': lifecycle_nodes}]),
         ])
 
-#    start_mapf_server = Node(
-#        package='mapf_server' ,
-#        executable= 'mapf_server' ,
-#        parameters= [ 
-#            params_path
-#        ]
-#    )
-#
-#    start_map_server = Node(
-#        package='nav2_map_server' ,
-#        executable= 'map_server' ,
-#        parameters= [ 
-#            params_path
-#        ]
-#    )
-#
     ld = LaunchDescription()
 
     ld.add_action(declare_params_file_cmddeclare_robot2_params_file_cmd)
