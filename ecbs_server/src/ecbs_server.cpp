@@ -403,10 +403,15 @@ void ecbs_server::path_response(
       path_.header.stamp = this->get_clock().get()->now(); 
       response->path = path_;
       RCLCPP_INFO(this->get_logger(), "Either the goal pose or start pose did overlap with other agents!");
+      valid_points = false;
+      }
+      else
+      {
+        valid_points = true;
       }
 
       agent_missing = false;
-      valid_points = true;
+      
     }
   }
     
@@ -420,8 +425,12 @@ void ecbs_server::path_response(
       path_.header.stamp = this->get_clock().get()->now(); 
       response->path = path_;
       RCLCPP_INFO(this->get_logger(), "Either the goal pose or start pose did overlap with other agents!");
+      valid_points = false;
     }
+    else
+    {
     valid_points = true;
+    }
   //  RCLCPP_INFO(this->get_logger(), "Agent created!");
   }
     
