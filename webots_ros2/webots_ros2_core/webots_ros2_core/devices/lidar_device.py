@@ -75,7 +75,7 @@ class LidarDevice(SensorDevice):
             self.__static_broadcaster = StaticTransformBroadcaster(node)
             transform_stamped = TransformStamped()
             transform_stamped.header.frame_id = self._frame_id
-            transform_stamped.child_frame_id = self._frame_id + '_rotated'
+            transform_stamped.child_frame_id = self._frame_id
             transform_stamped.transform.rotation.x = 0.5
             transform_stamped.transform.rotation.y = 0.5
             transform_stamped.transform.rotation.z = -0.5
@@ -127,7 +127,7 @@ class LidarDevice(SensorDevice):
         if ranges:
             msg = LaserScan()
             msg.header.stamp = stamp
-            msg.header.frame_id = self._frame_id + '_rotated'
+            msg.header.frame_id = self._frame_id
             msg.angle_min = -0.5 * self._wb_device.getFov()
             msg.angle_max = 0.5 * self._wb_device.getFov()
             msg.angle_increment = self._wb_device.getFov() / (self._wb_device.getHorizontalResolution() - 1)

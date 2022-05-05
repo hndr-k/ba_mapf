@@ -36,7 +36,7 @@ ecbs_server::ecbs_server(const rclcpp::NodeOptions &options)
 
     RCLCPP_INFO(this->get_logger(), "Init!");
   
-	
+
  RCLCPP_INFO(this->get_logger(), "Parameters done!");
 
   RCLCPP_INFO(this->get_logger(), "MAPF server initialized");
@@ -82,13 +82,13 @@ void ecbs_server::control_callback() {
       makespan = std::max<int>(makespan, s.cost);
     }
 
-    std::cout << "statistics:" << std::endl;
+    /*std::cout << "statistics:" << std::endl;
     std::cout << "  cost: " << cost << std::endl;
     std::cout << "  makespan: " << makespan << std::endl;
     std::cout << "  runtime: " << timer.elapsedSeconds() << std::endl;
     std::cout << "  highLevelExpanded: " << mapf.highLevelExpanded() << std::endl;
     std::cout << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
-    std::cout << "schedule:" << std::endl;
+    std::cout << "schedule:" << std::endl;*/
     paths.resize(solution.size());
     std::cout << "SIZE " << solution.size() << std::endl;
     for (size_t a = 0; a < solution.size(); ++a) {
@@ -107,20 +107,20 @@ void ecbs_server::control_callback() {
       paths[a].t_step.clear();
       paths[a].robot_id = int(a);
 
-      std::cout << "state size : " << solution[a].states.size() << std::endl;
+      //std::cout << "state size : " << solution[a].states.size() << std::endl;
       int i = 0;
       for (const auto& state : solution[a].states) {
-        std::cout << "    - x: " << state.first.x << std::endl
+        /*std::cout << "    - x: " << state.first.x << std::endl
             << "      y: " << state.first.y << std::endl
-            << "      t: " << state.second << std::endl;
+            << "      t: " << state.second << std::endl;*/
             paths[a].x_poses.push_back(state.first.x);
             paths[a].y_poses.push_back(state.first.y);
             paths[a].t_step.push_back(state.second);
-            std::cout << "iteration: " << i << std::endl;
-            std::cout << "poses path: " << paths[a].x_poses.size() << std::endl;
+            //std::cout << "iteration: " << i << std::endl;
+            //std::cout << "poses path: " << paths[a].x_poses.size() << std::endl;
             ++i;
       }
-      std::cout << "SIZE IN LOOP " << paths[a].x_poses.size() << std::endl;
+     //std::cout << "SIZE IN LOOP " << paths[a].x_poses.size() << std::endl;
     }
     
   } else {
@@ -186,11 +186,11 @@ ecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   {
     for(int j = 0; j < dimy; j++)
     {
-      std::cout << (unsigned int)costmap_->getCost(i, j) << std::endl;
+      //std::cout << (unsigned int)costmap_->getCost(i, j) << std::endl;
       if(costmap_->getCost(i, j) > 0)
       {
-        std::cout << "x " << i << " < y " << j << std::endl;
-        std::cout << (unsigned int)costmap_->getCost(i, j) << std::endl;
+        //std::cout << "x " << i << " < y " << j << std::endl;
+        //std::cout << (unsigned int)costmap_->getCost(i, j) << std::endl;
         obstacles.insert(Location(i, j));
       }
     }
@@ -204,7 +204,22 @@ ecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   //      }
 
   // create bond connection
-  
+    int agent_size = 3;
+    int iterator = 0;
+  for(int i = 0; i < agent_size; i++)
+  {
+    std::cout << "i " << i << std::endl;
+    geometry_msgs::msg::PoseStamped start;
+    start.pose.position.x = 5.0;
+    start.pose.position.y = 1.0 + i * 0.5;
+
+    geometry_msgs::msg::PoseStamped goal;
+    goal.pose.position.x = 6.0;
+    goal.pose.position.y = 0.0 + i * 0.5;
+    create_agent(start, goal, i);
+    
+  }
+	
   createBond();
   
 
@@ -279,16 +294,8 @@ bool ecbs_server::check_obstacle(double start_x, double start_y, double goal_x, 
   return true;
 }
 bool ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
-                        geometry_msgs::msg::PoseStamped goal, int start_id,
-                        int goal_id, int robotino_id) {
-  /*int resolution = current_grid_.info.resolution;*/
-  /*int pos_i = (start.pose.position.x - current_grid_.info.origin.position.x )
-  / resolution; int pos_j = (start.pose.position.y -
-  current_grid_.info.origin.position.y ) / resolution;
+                        geometry_msgs::msg::PoseStamped goal, int robotino_id) {
 
-  int goal_i = (goal.pose.position.x - current_grid_.info.origin.position.x ) /
-  resolution; int goal_j = (goal.pose.position.y -
-  current_grid_.info.origin.position.y ) / resolution;*/
 
   uint start_x, start_y, goal_x, goal_y;
   costmap_->worldToMap(start.pose.position.x, start.pose.position.y, start_x,
@@ -326,6 +333,7 @@ bool ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
   {
     return false;
   }
+  RCLCPP_INFO(get_logger(), "Creating: %i", agent_.id);
   agents.push_back(agent_);
   return true;
 
@@ -412,7 +420,7 @@ void ecbs_server::path_response(
     
   if (agent_missing) {
   //  RCLCPP_INFO(this->get_logger(), "Creating agent.");
-    if(!create_agent(request->start, request->goal, 0, 0, request->robotino_id))
+    if(!create_agent(request->start, request->goal, request->robotino_id))
     {
       nav_msgs::msg::Path path_;
       path_.header.frame_id = "map";
@@ -437,18 +445,14 @@ void ecbs_server::path_response(
   path_.header.stamp = this->get_clock().get()->now();
 
 
-  //	while  (needs_replan_ == true) {
-  //            loop_rate.sleep();
-  //	    rclcpp::spin_some(this->get_node_base_interface());
-  //
-  //            RCLCPP_INFO(this->get_logger(), "Wait for path!");
-  //	}
+
   double x_old, y_old;
   for (auto &path : paths) {
     if (path.robot_id == request->robotino_id) {
       for(int i = 0; i < path.x_poses.size(); i++)
       {
-        std::cout << "SIZE PATH " << path.x_poses.size() << std::endl;
+        //std::cout << "SIZE PATH " << path.x_poses.size() << std::endl;
+        //std::cout << "robotino ID " << path.robot_id << std::endl;
         geometry_msgs::msg::PoseStamped pose_;
         double x, y;
         costmap_->mapToWorld(path.x_poses[i], path.y_poses[i], x, y);
@@ -461,81 +465,22 @@ void ecbs_server::path_response(
         pose_.pose.orientation.z = 1.0;
         pose_.header.frame_id = "map";
         pose_.header.stamp = this->get_clock().get()->now();
-        //path_.poses.push_back(pose_);
-        /*if(i > 0)
-        {
-        int intervall_size = 4;
-        double x_diff = pose_.pose.position.x - x_old;
-        double y_diff = pose_.pose.position.y - y_old;
-        double intervall_x = x_diff / (intervall_size + 1);
-        double intervall_y = y_diff / (intervall_size + 1);
-        geometry_msgs::msg::PoseStamped pose_new;
-        //std::cout << "x_old " << path_.poses[i-1].pose.position.x << " y_old " << path_.poses[i-1].pose.position.y  << std::endl;
-         
-        for (int j = 1; j <= intervall_size; j++) {
-          
-          geometry_msgs::msg::PoseStamped pose_new;
-
-          pose_new.pose.position.x = x_old + intervall_x * j;
-          pose_new.pose.position.y = y_old + intervall_y * j;
-          pose_new.pose.position.z = 0.0;
-          pose_new.pose.orientation.x = 0.0;
-          pose_new.pose.orientation.y = 0.0;
-          pose_new.pose.orientation.z = 0.0;
-          pose_new.pose.orientation.z = 1.0;
-          pose_new.header.frame_id = "map";
-          pose_new.header.stamp = this->get_clock().get()->now();
-          //std::cout << "x " << pose_new.pose.position.x << " y " << pose_new.pose.position.y << std::endl;
-          //path_.poses.push_back(pose_new);
-          }
-          //std::cout << "x_new " << pose_.pose.position.x << " y_new " << pose_.pose.position.y  << std::endl;
-          x_old = pose_.pose.position.x;
-          y_old = pose_.pose.position.y;*/
-          path_.poses.push_back(pose_);
         
-          //std::cout << "x: " << x << " y: " << y << std::endl;
+        path_.poses.push_back(pose_);
         
       }
 
     
-      geometry_msgs::msg::PoseStamped pose_;
-      /*nav_msgs::msg::Path path_res;
-      if(path_.poses.size() < 10)
-      {
-      for(int i = 0; i < path_.poses.size(); i++)
-      {
-        geometry_msgs::msg::PoseStamped pose_res;
-        pose_res = path_.poses[i];
-        path_res.poses.push_back(pose_res);
-      }
-      pose_.pose = request->goal.pose;
-      pose_.header.frame_id = "map";
-      pose_.header.stamp = this->get_clock().get()->now();
-      path_res.poses.push_back(pose_);
-      }
-      else{
-      for(int i = 0; i < 10; i++)
-      {
-        geometry_msgs::msg::PoseStamped pose_res;
-        pose_res = path_.poses[i];
-        path_res.poses.push_back(pose_res);
-      }
-      
+      geometry_msgs::msg::PoseStamped pose_;      
       pose_.pose = request->goal.pose;
       pose_.header.frame_id = "map";
       pose_.header.stamp = this->get_clock().get()->now();
       path_.poses.push_back(pose_);
-      }*/
-      pose_.pose = request->goal.pose;
-      pose_.header.frame_id = "map";
-      pose_.header.stamp = this->get_clock().get()->now();
-      path_.poses.push_back(pose_);
-//      RCLCPP_INFO(this->get_logger(), "%d size of path", path_.poses.size());
       path_.header.frame_id = "map";
       path_.header.stamp = this->get_clock().get()->now();
       for(auto pose : path_.poses)
       {
-        std::cout << "x: " << pose.pose.position.x << "y : " << pose.pose.position.y << std::endl;
+        //std::cout << "x: " << pose.pose.position.x << "y : " << pose.pose.position.y << std::endl;
       }
       response->path = path_;
       RCLCPP_INFO(this->get_logger(), "%d size of path",

@@ -102,24 +102,24 @@ def main(args=None):
 
     action_client = MapfActionClient()
 
-    future_1 = action_client.send_request_1()
+    #future_1 = action_client.send_request_1()
 
-    while rclpy.ok():
-        rclpy.spin_once(action_client)
-        if action_client.future.done():
-            try:
-                response = action_client.future.result()
-            except Exception as e:
-                action_client.get_logger().info(
-                    'Service call failed %r' % (e,))
-            else:
-                action_client.get_logger().info(
-                    'Robotino Id %d' %
-                    (action_client.req.robotino_id))
-                for msg in response.path.poses:
-                    action_client.get_logger().info('x : %f' % (msg.pose.position.y))
-                
-            break
+    #while rclpy.ok():
+    #    rclpy.spin_once(action_client)
+    #    if action_client.future.done():
+    #        try:
+    #            response = action_client.future.result()
+    #        except Exception as e:
+    #            action_client.get_logger().info(
+    #                'Service call failed %r' % (e,))
+    #        else:
+    #            action_client.get_logger().info(
+    #                'Robotino Id %d' %
+    #                (action_client.req.robotino_id))
+    #            for msg in response.path.poses:
+    #                action_client.get_logger().info('x : %f' % (msg.pose.position.y))
+    #            
+    #        break
     future_2 = action_client.send_request_2()
 
     while rclpy.ok():
@@ -139,26 +139,26 @@ def main(args=None):
                     action_client.get_logger().info('x : %f y : %f' % (msg.pose.position.x, msg.pose.position.y))
                 
             break
-    future_1 = action_client.send_request_1()
-    response.path.poses.clear()
-    while rclpy.ok():
-        rclpy.spin_once(action_client)
-        if action_client.future.done():
-            try:
-                response = action_client.future.result()
-            except Exception as e:
-                action_client.get_logger().info(
-                    'Service call failed %r' % (e,))
-            else:
-                action_client.get_logger().info(
-                    'Robotino Id %d' %
-                    (action_client.req.robotino_id))
-                action_client.path_rob1 = response.path.poses
-                for msg in response.path.poses:
-                    action_client.get_logger().info('x : %f y : %f' % (msg.pose.position.x, msg.pose.position.y))
+    #future_1 = action_client.send_request_1()
+    #response.path.poses.clear()
+    #while rclpy.ok():
+    #    rclpy.spin_once(action_client)
+    #    if action_client.future.done():
+    #        try:
+    #            response = action_client.future.result()
+    #        except Exception as e:
+    #            action_client.get_logger().info(
+    #                'Service call failed %r' % (e,))
+    #        else:
+    #            action_client.get_logger().info(
+    #                'Robotino Id %d' %
+    #                (action_client.req.robotino_id))
+    #            action_client.path_rob1 = response.path.poses
+    #            for msg in response.path.poses:
+    #                action_client.get_logger().info('x : %f y : %f' % (msg.pose.position.x, msg.pose.position.y))
                 
-            break
-    future_2 = action_client.send_request_2()
+     #       break
+    #future_2 = action_client.send_request_2()
 
     while rclpy.ok():
         rclpy.spin_once(action_client)

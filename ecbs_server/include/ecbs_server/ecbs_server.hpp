@@ -118,12 +118,12 @@ public:
 // variables used by eecbs
   std::unordered_set<Location> obstacles; //done
 
-    bool disappearAtGoal;
-  float w;
-  int dimx; //done
-  int dimy; //done 
-  std::vector<PlanResult<State, Action, int> > solution;
-  std::unordered_set<State> startStatesSet;
+bool disappearAtGoal;
+float w;
+int dimx; //done
+int dimy; //done 
+std::vector<PlanResult<State, Action, int> > solution;
+std::unordered_set<State> startStatesSet;
 //Instance instance;
 std::vector<rosAgent> agents;
 std::vector<rosPath> paths;
@@ -134,8 +134,7 @@ bool update_agent(geometry_msgs::msg::PoseStamped start,
 
 
 bool create_agent(geometry_msgs::msg::PoseStamped start,
-                        geometry_msgs::msg::PoseStamped goal, int start_id,
-                        int goal_id, int robotino_id);
+                        geometry_msgs::msg::PoseStamped goal, int robotino_id);
 bool check_bounds(double start_x, double start_y, double goal_x, double goal_y);
 bool check_obstacle(double start_x, double start_y, double goal_x, double goal_y);
 boost::program_options::options_description desc;
