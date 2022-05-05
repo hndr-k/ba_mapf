@@ -40,7 +40,9 @@ def generate_launch_description():
     # Names and poses of the robots
     robots = [
         {'name': 'robotino1', 'x_pose': 0.0, 'y_pose': 0.5, 'z_pose': 0.01},
-        {'name': 'robotino2', 'x_pose': 0.0, 'y_pose': -0.5, 'z_pose': 0.01}]
+        {'name': 'robotino2', 'x_pose': 0.0, 'y_pose': -0.5, 'z_pose': 0.01},
+        {'name': 'robotino3', 'x_pose': 0.0, 'y_pose': -0.5, 'z_pose': 0.01},
+        {'name': 'robotino4', 'x_pose': 0.0, 'y_pose': -0.5, 'z_pose': 0.01}]
 
     # Simulation settings
     world = LaunchConfiguration('world')
@@ -84,6 +86,11 @@ def generate_launch_description():
     declare_robotino3_params_file_cmd = DeclareLaunchArgument(
         'robotino3_params_file',
         default_value=os.path.join(bringup_dir, 'params', 'nav2_multirobot_params_3.yaml'),
+        description='Full path to the ROS2 parameters file to use for robot2 launched nodes')
+
+    declare_robotino4_params_file_cmd = DeclareLaunchArgument(
+        'robotino4_params_file',
+        default_value=os.path.join(bringup_dir, 'params', 'nav2_multirobot_params_4.yaml'),
         description='Full path to the ROS2 parameters file to use for robot2 launched nodes')
 
     declare_autostart_cmd = DeclareLaunchArgument(
@@ -188,6 +195,7 @@ def generate_launch_description():
     ld.add_action(declare_robotino1_params_file_cmd)
     ld.add_action(declare_robotino2_params_file_cmd)
     ld.add_action(declare_robotino3_params_file_cmd)
+    ld.add_action(declare_robotino4_params_file_cmd)
     ld.add_action(declare_use_rviz_cmd)
     ld.add_action(declare_autostart_cmd)
     ld.add_action(declare_rviz_config_file_cmd)

@@ -64,6 +64,7 @@ setup(
             'robotino3_driver = webots_ros2_robotino3.robotino3_driver:main',
             'robotino3_driver_new = webots_ros2_robotino3.robotino3_driver_new:main',
             'robotino3_driver_three = webots_ros2_robotino3.robotino3_driver_three:main',
+            'robotino3_driver_four = webots_ros2_robotino3.robotino3_driver_four:main',
             'frame_listener = webots_ros2_robotino3.frame_listener:main'
         ],
         'launch.frontend.launch_extension': ['launch_ros = launch_ros']
