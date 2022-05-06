@@ -110,9 +110,9 @@ void ecbs_server::control_callback() {
       //std::cout << "state size : " << solution[a].states.size() << std::endl;
       int i = 0;
       for (const auto& state : solution[a].states) {
-        /*std::cout << "    - x: " << state.first.x << std::endl
+        std::cout << "    - x: " << state.first.x << std::endl
             << "      y: " << state.first.y << std::endl
-            << "      t: " << state.second << std::endl;*/
+            << "      t: " << state.second << std::endl;
             paths[a].x_poses.push_back(state.first.x);
             paths[a].y_poses.push_back(state.first.y);
             paths[a].t_step.push_back(state.second);
