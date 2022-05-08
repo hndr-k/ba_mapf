@@ -517,44 +517,33 @@ nav_msgs::msg::Path path_;
         pose_.header.frame_id = "map";
         pose_.header.stamp = this->get_clock().get()->now();
         path_.poses.push_back(pose_);
- //       std::cout << "x: " << x << " y: " << y << std::endl;
+        std::cout << "x: " << x << " y: " << y << " t: " << i << std::endl;
         
       }
-    }
+    
       geometry_msgs::msg::PoseStamped pose_;
       nav_msgs::msg::Path path_res;
-      if(path_.poses.size() < 10)
+      /*if(path_.poses.size() < 10)
       {
       for(int i = 0; i < path_.poses.size(); i++)
       {
         geometry_msgs::msg::PoseStamped pose_res;
         pose_res = path_.poses[i];
         path_res.poses.push_back(pose_res);
-      }
+      }*/
       pose_.pose = request->goal.pose;
       pose_.header.frame_id = "map";
       pose_.header.stamp = this->get_clock().get()->now();
-      path_res.poses.push_back(pose_);
-      }
-      else{
-      for(int i = 0; i < 10; i++)
-      {
-        geometry_msgs::msg::PoseStamped pose_res;
-        pose_res = path_.poses[i];
-        path_res.poses.push_back(pose_res);
-      }
-      pose_.pose = request->goal.pose;
-      pose_.header.frame_id = "map";
-      pose_.header.stamp = this->get_clock().get()->now();
-      path_res.poses.push_back(pose_);
-      }
+      path_.poses.push_back(pose_);
+      
 
 //      RCLCPP_INFO(this->get_logger(), "%d size of path", path_.poses.size());
       path_res.header.frame_id = "map";
       path_res.header.stamp = this->get_clock().get()->now();
-      response->path = path_res;
+      response->path = path_;
       RCLCPP_INFO(this->get_logger(), "%d size of path",
                   response->path.poses.size());
+    }
     }
   
   RCLCPP_INFO(this->get_logger(), "Passing response!");

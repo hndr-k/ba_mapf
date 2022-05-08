@@ -28,5 +28,5 @@ map_server_mapf:
   ros__parameters:
           #yaml_filename: "mapf_map.yaml"
           #    yaml_filename: "/home/nlimpert/dev/colcon_ws/src/ccbs_server/maps/mapf_map.yaml"
-    yaml_filename: "/home/hendrik/ba_ws/src/ccbs_server/maps/mymap.yaml"
+    yaml_filename: "/home/hendrik/ba_ws/map_one.yaml"
     topic_name: "/mapf_map"
