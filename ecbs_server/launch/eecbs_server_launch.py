@@ -41,7 +41,7 @@ def generate_launch_description():
         # TODO: the following needs to be used properly
         DeclareLaunchArgument(
             'map',
-            default_value=os.path.join(package_dir, 'maps', 'fha.yaml'),
+            default_value=os.path.join(package_dir, 'maps', 'mapf.yaml'),
             description='Full path to map yaml file to load'),
 
         DeclareLaunchArgument(
