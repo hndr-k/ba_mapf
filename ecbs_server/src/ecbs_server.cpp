@@ -2,7 +2,6 @@
 
 #include "ecbs_server/ecbs_server.hpp"
 
-
 #include <fstream>
 #include <iostream>
 
@@ -15,13 +14,15 @@
 #include <ecbs_server/timer.hpp>
 
 namespace ecbs_server {
-//    ecbs_server::ecbs_server(const rclcpp::NodeOptions& ) : Node("mapf_action_server"),
-//    map_(0.25, 3), cbs_() ecbs_server::ecbs_server() :
+//    ecbs_server::ecbs_server(const rclcpp::NodeOptions& ) :
+//    Node("mapf_action_server"), map_(0.25, 3), cbs_()
+//    ecbs_server::ecbs_server() :
 //    rclcpp_lifecycle::LifecycleNode("mapf_action_server",
 //    rclcpp::NodeOptions()), map_(0.25, 3), cbs_()
 //
 ecbs_server::ecbs_server(const rclcpp::NodeOptions &options)
-    : nav2_util::LifecycleNode("mapf_action_server", "", true, options), loop_rate(20), desc("Allowed options!") {
+    : nav2_util::LifecycleNode("mapf_action_server", "", true, options),
+      loop_rate(20), desc("Allowed options!") {
 
   //        occ_grid_sub_ =
   //        this->create_subscription<nav_msgs::msg::OccupancyGrid>("global_costmap/costmap",
@@ -32,12 +33,10 @@ ecbs_server::ecbs_server(const rclcpp::NodeOptions &options)
       "/off_field/mapf_plan",
       std::bind(&ecbs_server::path_response, this, std::placeholders::_1,
                 std::placeholders::_2));
-  
 
-    RCLCPP_INFO(this->get_logger(), "Init!");
-  
-	
- RCLCPP_INFO(this->get_logger(), "Parameters done!");
+  RCLCPP_INFO(this->get_logger(), "Init!");
+
+  RCLCPP_INFO(this->get_logger(), "Parameters done!");
 
   RCLCPP_INFO(this->get_logger(), "MAPF server initialized");
 }
@@ -48,7 +47,6 @@ void ecbs_server::init() {}
 void ecbs_server::control_callback() {
   //	while (rclcpp::ok())
   //	{
-  
 
   if (costmap_ros_ != nullptr && costmap_ != nullptr) {
 
@@ -56,82 +54,82 @@ void ecbs_server::control_callback() {
     std::vector<State> startStates;
     std::unordered_set<State> startStatesSet;
 
-    for (const auto& agent : agents) {
-    startStates.emplace_back(State(0, agent.start_x,agent.start_y));
-    // std::cout << "s: " << startStates.back() << std::endl;
-    goals.emplace_back(Location(agent.goal_x, agent.goal_y));
+    for (const auto &agent : agents) {
+      startStates.emplace_back(State(0, agent.start_x, agent.start_y));
+      // std::cout << "s: " << startStates.back() << std::endl;
+      goals.emplace_back(Location(agent.goal_x, agent.goal_y));
     }
-    for (const auto& s : startStates) {
-    startStatesSet.insert(s);
+    for (const auto &s : startStates) {
+      startStatesSet.insert(s);
     }
     bool disappearAtGoal = false;
     double w = 1.3;
     Environment mapf(dimx, dimy, obstacles, goals, disappearAtGoal);
     ECBS<State, Action, int, Conflict, Constraints, Environment> ecbs(mapf, w);
-    std::vector<PlanResult<State, Action, int> > solution;
+    std::vector<PlanResult<State, Action, int>> solution;
 
     Timer timer;
     bool success = ecbs.search(startStates, solution);
     timer.stop();
     if (success) {
-    std::cout << "Planning successful! " << std::endl;
-    int cost = 0;
-    int makespan = 0;
-    for (const auto& s : solution) {
-      cost += s.cost;
-      makespan = std::max<int>(makespan, s.cost);
-    }
-
-    std::cout << "statistics:" << std::endl;
-    std::cout << "  cost: " << cost << std::endl;
-    std::cout << "  makespan: " << makespan << std::endl;
-    std::cout << "  runtime: " << timer.elapsedSeconds() << std::endl;
-    std::cout << "  highLevelExpanded: " << mapf.highLevelExpanded() << std::endl;
-    std::cout << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
-    std::cout << "schedule:" << std::endl;
-    paths.resize(solution.size());
-    std::cout << "SIZE " << solution.size() << std::endl;
-    for (size_t a = 0; a < solution.size(); ++a) {
-      // std::cout << "Solution for: " << a << std::endl;
-      // for (size_t i = 0; i < solution[a].actions.size(); ++i) {
-      //   std::cout << solution[a].states[i].second << ": " <<
-      //   solution[a].states[i].first << "->" << solution[a].actions[i].first
-      //   << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
-      // }
-      // std::cout << solution[a].states.back().second << ": " <<
-      // solution[a].states.back().first << std::endl;
-
-      std::cout << "  agent" << a << ":" << std::endl;
-      paths[a].x_poses.clear();
-      paths[a].y_poses.clear();
-      paths[a].t_step.clear();
-      paths[a].robot_id = int(a);
-
-      std::cout << "state size : " << solution[a].states.size() << std::endl;
-      int i = 0;
-      for (const auto& state : solution[a].states) {
-        std::cout << "    - x: " << state.first.x << std::endl
-            << "      y: " << state.first.y << std::endl
-            << "      t: " << state.second << std::endl;
-            paths[a].x_poses.push_back(state.first.x);
-            paths[a].y_poses.push_back(state.first.y);
-            paths[a].t_step.push_back(state.second);
-            std::cout << "iteration: " << i << std::endl;
-            std::cout << "poses path: " << paths[a].x_poses.size() << std::endl;
-            ++i;
+      std::cout << "Planning successful! " << std::endl;
+      int cost = 0;
+      int makespan = 0;
+      for (const auto &s : solution) {
+        cost += s.cost;
+        makespan = std::max<int>(makespan, s.cost);
       }
-      std::cout << "SIZE IN LOOP " << paths[a].x_poses.size() << std::endl;
+
+      std::cout << "statistics:" << std::endl;
+      std::cout << "  cost: " << cost << std::endl;
+      std::cout << "  makespan: " << makespan << std::endl;
+      std::cout << "  runtime: " << timer.elapsedSeconds() << std::endl;
+      std::cout << "  highLevelExpanded: " << mapf.highLevelExpanded()
+                << std::endl;
+      std::cout << "  lowLevelExpanded: " << mapf.lowLevelExpanded()
+                << std::endl;
+      std::cout << "schedule:" << std::endl;
+      paths.resize(solution.size());
+      std::cout << "SIZE " << solution.size() << std::endl;
+      for (size_t a = 0; a < solution.size(); ++a) {
+        // std::cout << "Solution for: " << a << std::endl;
+        // for (size_t i = 0; i < solution[a].actions.size(); ++i) {
+        //   std::cout << solution[a].states[i].second << ": " <<
+        //   solution[a].states[i].first << "->" << solution[a].actions[i].first
+        //   << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
+        // }
+        // std::cout << solution[a].states.back().second << ": " <<
+        // solution[a].states.back().first << std::endl;
+
+        std::cout << "  agent" << a << ":" << std::endl;
+        paths[a].x_poses.clear();
+        paths[a].y_poses.clear();
+        paths[a].t_step.clear();
+        paths[a].robot_id = int(a);
+
+        std::cout << "state size : " << solution[a].states.size() << std::endl;
+        int i = 0;
+        for (const auto &state : solution[a].states) {
+          std::cout << "    - x: " << state.first.x << std::endl
+                    << "      y: " << state.first.y << std::endl
+                    << "      t: " << state.second << std::endl;
+          paths[a].x_poses.push_back(state.first.x);
+          paths[a].y_poses.push_back(state.first.y);
+          paths[a].t_step.push_back(state.second);
+          std::cout << "iteration: " << i << std::endl;
+          std::cout << "poses path: " << paths[a].x_poses.size() << std::endl;
+          ++i;
+        }
+        std::cout << "SIZE IN LOOP " << paths[a].x_poses.size() << std::endl;
+      }
+
+    } else {
+      std::cout << "Planning NOT successful!" << std::endl;
     }
-    
-  } else {
-    std::cout << "Planning NOT successful!" << std::endl;
-  }
-
-
 
     //               if (costmap_ros_->get_current_state().id() ==
     //               lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
-  
+
     //	       }
   } else {
     RCLCPP_ERROR(this->get_logger(), "Tried to execute the planning callback "
@@ -140,8 +138,6 @@ void ecbs_server::control_callback() {
   //   	loop_rate.sleep();
   //	}
 }
-
-
 
 nav2_util::CallbackReturn
 ecbs_server::on_configure(const rclcpp_lifecycle::State &state) {
@@ -156,10 +152,8 @@ ecbs_server::on_configure(const rclcpp_lifecycle::State &state) {
   costmap_ros_->on_configure(state);
   costmap_ = costmap_ros_->getLayeredCostmap()->getCostmap();
 
-
   std::cout << "test" << std::endl;
   RCLCPP_INFO(this->get_logger(), "Done configuring!");
-  
 
   //      planning_thread = std::thread(&ecbs_server::control_callback, this);
   return nav2_util::CallbackReturn::SUCCESS;
@@ -172,7 +166,7 @@ ecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   //      plan_publisher_->on_activate();
   //      action_server_pose_->activate();
   //      action_server_poses_->activate();
-  
+
   costmap_ros_->on_activate(state);
   //      std::chrono::duration<double> period;
   //      period = std::chrono::milliseconds(100);
@@ -182,13 +176,10 @@ ecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   dimx = costmap_->getSizeInCellsX();
   dimy = costmap_->getSizeInCellsY();
 
-  for(int i = 0; i < dimx; i++)
-  {
-    for(int j = 0; j < dimy; j++)
-    {
+  for (int i = 0; i < dimx; i++) {
+    for (int j = 0; j < dimy; j++) {
       std::cout << (unsigned int)costmap_->getCost(i, j) << std::endl;
-      if(costmap_->getCost(i, j) > 0)
-      {
+      if (costmap_->getCost(i, j) > 0) {
         std::cout << "x " << i << " < y " << j << std::endl;
         std::cout << (unsigned int)costmap_->getCost(i, j) << std::endl;
         obstacles.insert(Location(i, j));
@@ -204,9 +195,8 @@ ecbs_server::on_activate(const rclcpp_lifecycle::State &state) {
   //      }
 
   // create bond connection
-  
+
   createBond();
-  
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
@@ -252,35 +242,36 @@ ecbs_server::on_cleanup(const rclcpp_lifecycle::State &state) {
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn ecbs_server::on_shutdown(const rclcpp_lifecycle::State &) {
+nav2_util::CallbackReturn
+ecbs_server::on_shutdown(const rclcpp_lifecycle::State &) {
   RCLCPP_INFO(get_logger(), "Shutting down");
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-bool ecbs_server::check_bounds(double start_x, double start_y, double goal_x, double goal_y)
-{
-  if((start_x > costmap_->getSizeInCellsX()) || (start_y > costmap_->getSizeInCellsY()))
-  {
+bool ecbs_server::check_bounds(double start_x, double start_y, double goal_x,
+                               double goal_y) {
+  if ((start_x > costmap_->getSizeInCellsX()) ||
+      (start_y > costmap_->getSizeInCellsY())) {
     return false;
   }
-  if((goal_x > costmap_->getSizeInCellsX()) || (goal_y > costmap_->getSizeInCellsY()))
-  {
+  if ((goal_x > costmap_->getSizeInCellsX()) ||
+      (goal_y > costmap_->getSizeInCellsY())) {
     return false;
   }
 
   return true;
 }
-bool ecbs_server::check_obstacle(double start_x, double start_y, double goal_x, double goal_y)
-{
-  if(((unsigned int)costmap_->getCost(start_x, start_y) > 0) || ((unsigned int)costmap_->getCost(goal_x, goal_y) > 0))
-  {
+bool ecbs_server::check_obstacle(double start_x, double start_y, double goal_x,
+                                 double goal_y) {
+  if (((unsigned int)costmap_->getCost(start_x, start_y) > 0) ||
+      ((unsigned int)costmap_->getCost(goal_x, goal_y) > 0)) {
     return false;
   }
   return true;
 }
 bool ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
-                        geometry_msgs::msg::PoseStamped goal, int start_id,
-                        int goal_id, int robotino_id) {
+                               geometry_msgs::msg::PoseStamped goal,
+                               int start_id, int goal_id, int robotino_id) {
   /*int resolution = current_grid_.info.resolution;*/
   /*int pos_i = (start.pose.position.x - current_grid_.info.origin.position.x )
   / resolution; int pos_j = (start.pose.position.y -
@@ -303,66 +294,56 @@ bool ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
   agent_.start_y = start_y;
   agent_.id = robotino_id;
   int curr_agent_size = agents.size();
-  for(int i = 0; i < curr_agent_size; i++)
-  {
-    if(agent_.id != agents[i].id)
-    {
-      if((agent_.start_x == agents[i].start_x) && (agent_.start_y == agents[i].start_y))
-      {
+  for (int i = 0; i < curr_agent_size; i++) {
+    if (agent_.id != agents[i].id) {
+      if ((agent_.start_x == agents[i].start_x) &&
+          (agent_.start_y == agents[i].start_y)) {
         return false;
       }
-      if((agent_.goal_x == agents[i].goal_x) && (agent_.goal_y == agents[i].goal_y))
-      {
+      if ((agent_.goal_x == agents[i].goal_x) &&
+          (agent_.goal_y == agents[i].goal_y)) {
         return false;
       }
-
     }
   }
-  if(!check_obstacle(agent_.start_x, agent_.start_y, agent_.goal_x, agent_.goal_y))
-  {
+  if (!check_obstacle(agent_.start_x, agent_.start_y, agent_.goal_x,
+                      agent_.goal_y)) {
     return false;
   }
-  if(!check_bounds(agent_.start_x, agent_.start_y, agent_.goal_x, agent_.goal_y))
-  {
+  if (!check_bounds(agent_.start_x, agent_.start_y, agent_.goal_x,
+                    agent_.goal_y)) {
     return false;
   }
   agents.push_back(agent_);
   return true;
-
 }
 
 bool ecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
-                        geometry_msgs::msg::PoseStamped goal, rosAgent &agent)
+                               geometry_msgs::msg::PoseStamped goal,
+                               rosAgent &agent)
 
 {
-  
+
   uint start_x, start_y, goal_x, goal_y;
   costmap_->worldToMap(start.pose.position.x, start.pose.position.y, start_x,
                        start_y);
   costmap_->worldToMap(goal.pose.position.x, goal.pose.position.y, goal_x,
                        goal_y);
   int curr_agent_size = agents.size();
-  for(int i = 0; i < curr_agent_size; i++)
-  {
-    if(agent.id != agents[i].id)
-    {
-      if((start_x == agents[i].start_x) && (start_y == agents[i].start_y))
-      {
+  for (int i = 0; i < curr_agent_size; i++) {
+    if (agent.id != agents[i].id) {
+      if ((start_x == agents[i].start_x) && (start_y == agents[i].start_y)) {
         return false;
       }
-      if((goal_x == agents[i].goal_x) && (goal_y == agents[i].goal_y))
-      {
+      if ((goal_x == agents[i].goal_x) && (goal_y == agents[i].goal_y)) {
         return false;
       }
-
     }
   }
-  if(!check_obstacle(start_x, start_y, goal_x, goal_y))
-  {
+  if (!check_obstacle(start_x, start_y, goal_x, goal_y)) {
     return false;
   }
-  if(!check_bounds(start_x, start_y, goal_x, goal_y))
-  {
+  if (!check_bounds(start_x, start_y, goal_x, goal_y)) {
     return false;
   }
   agent.goal_x = goal_x;
@@ -372,200 +353,127 @@ bool ecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
   std::cout << "update: " << agent.start_x << " " << agent.start_y << "  "
             << agent.goal_x << " " << agent.goal_y << "\n";
   return true;
-
 }
-
 
 void ecbs_server::path_response(
     const std::shared_ptr<mapf_actions::srv::Mapf::Request> request,
     std::shared_ptr<mapf_actions::srv::Mapf::Response> response) {
-  
+
   bool agent_missing = true;
   bool valid_points = false;
-  
 
   RCLCPP_INFO(this->get_logger(), "New request: %f %f -> %f %f!",
               request->start.pose.position.x, request->start.pose.position.y,
               request->goal.pose.position.x, request->goal.pose.position.y);
 
-    
   for (auto &agent : agents) {
 
     if (agent.id == request->robotino_id) {
 
       RCLCPP_INFO(this->get_logger(), "Agent id %i update!", agent.id);
 
-      if(!update_agent(request->start, request->goal, agent))
-      {
-      nav_msgs::msg::Path path_;
-      path_.header.frame_id = "map";
+      if (!update_agent(request->start, request->goal, agent)) {
+        nav_msgs::msg::Path path_;
+        path_.header.frame_id = "map";
 
-      path_.header.stamp = this->get_clock().get()->now(); 
-      response->path = path_;
-      RCLCPP_INFO(this->get_logger(), "Either the goal pose or start pose did overlap with other agents!");
-      valid_points = false;
-      }
-      else
-      {
+        path_.header.stamp = this->get_clock().get()->now();
+        response->path = path_;
+        RCLCPP_INFO(this->get_logger(), "Either the goal pose or start pose "
+                                        "did overlap with other agents!");
+        valid_points = false;
+      } else {
         valid_points = true;
       }
 
       agent_missing = false;
-      
     }
   }
-    
+
   if (agent_missing) {
-  //  RCLCPP_INFO(this->get_logger(), "Creating agent.");
-    if(!create_agent(request->start, request->goal, 0, 0, request->robotino_id))
-    {
+    //  RCLCPP_INFO(this->get_logger(), "Creating agent.");
+    if (!create_agent(request->start, request->goal, 0, 0,
+                      request->robotino_id)) {
       nav_msgs::msg::Path path_;
       path_.header.frame_id = "map";
 
-      path_.header.stamp = this->get_clock().get()->now(); 
+      path_.header.stamp = this->get_clock().get()->now();
       response->path = path_;
-      RCLCPP_INFO(this->get_logger(), "Either the goal pose or start pose did overlap with other agents!");
+      RCLCPP_INFO(
+          this->get_logger(),
+          "Either the goal pose or start pose did overlap with other agents!");
       valid_points = false;
+    } else {
+      valid_points = true;
     }
-    else
-    {
-    valid_points = true;
-    }
-  //  RCLCPP_INFO(this->get_logger(), "Agent created!");
+    //  RCLCPP_INFO(this->get_logger(), "Agent created!");
   }
-    
 
+  if (valid_points) {
+    control_callback();
 
-  if(valid_points)
-  {
-  control_callback();
+    nav_msgs::msg::Path path_;
+    path_.header.frame_id = "map";
 
-  nav_msgs::msg::Path path_;
-  path_.header.frame_id = "map";
+    path_.header.stamp = this->get_clock().get()->now();
 
-  path_.header.stamp = this->get_clock().get()->now();
+    //	while  (needs_replan_ == true) {
+    //            loop_rate.sleep();
+    //	    rclcpp::spin_some(this->get_node_base_interface());
+    //
+    //            RCLCPP_INFO(this->get_logger(), "Wait for path!");
+    //	}
+    double x_old, y_old;
+    for (auto &path : paths) {
+      if (path.robot_id == request->robotino_id) {
+        for (int i = 0; i < path.x_poses.size(); i++) {
+          std::cout << "SIZE PATH " << path.x_poses.size() << std::endl;
+          geometry_msgs::msg::PoseStamped pose_;
+          double x, y;
+          costmap_->mapToWorld(path.x_poses[i], path.y_poses[i], x, y);
+          pose_.pose.position.x = x;
+          pose_.pose.position.y = y;
+          pose_.pose.position.z = 0.0;
+          pose_.pose.orientation.x = 0.0;
+          pose_.pose.orientation.y = 0.0;
+          pose_.pose.orientation.z = 0.0;
+          pose_.pose.orientation.z = 1.0;
+          pose_.header.frame_id = "map";
+          pose_.header.stamp = this->get_clock().get()->now();
 
+          path_.poses.push_back(pose_);
+        }
 
-  //	while  (needs_replan_ == true) {
-  //            loop_rate.sleep();
-  //	    rclcpp::spin_some(this->get_node_base_interface());
-  //
-  //            RCLCPP_INFO(this->get_logger(), "Wait for path!");
-  //	}
-  double x_old, y_old;
-  for (auto &path : paths) {
-    if (path.robot_id == request->robotino_id) {
-      for(int i = 0; i < path.x_poses.size(); i++)
-      {
-        std::cout << "SIZE PATH " << path.x_poses.size() << std::endl;
         geometry_msgs::msg::PoseStamped pose_;
-        double x, y;
-        costmap_->mapToWorld(path.x_poses[i], path.y_poses[i], x, y);
-        pose_.pose.position.x = x;
-        pose_.pose.position.y = y;
-        pose_.pose.position.z = 0.0;
-        pose_.pose.orientation.x = 0.0;
-        pose_.pose.orientation.y = 0.0;
-        pose_.pose.orientation.z = 0.0;
-        pose_.pose.orientation.z = 1.0;
+
+        pose_.pose = request->goal.pose;
         pose_.header.frame_id = "map";
         pose_.header.stamp = this->get_clock().get()->now();
-        //path_.poses.push_back(pose_);
-        /*if(i > 0)
-        {
-        int intervall_size = 4;
-        double x_diff = pose_.pose.position.x - x_old;
-        double y_diff = pose_.pose.position.y - y_old;
-        double intervall_x = x_diff / (intervall_size + 1);
-        double intervall_y = y_diff / (intervall_size + 1);
-        geometry_msgs::msg::PoseStamped pose_new;
-        //std::cout << "x_old " << path_.poses[i-1].pose.position.x << " y_old " << path_.poses[i-1].pose.position.y  << std::endl;
-         
-        for (int j = 1; j <= intervall_size; j++) {
-          
-          geometry_msgs::msg::PoseStamped pose_new;
-
-          pose_new.pose.position.x = x_old + intervall_x * j;
-          pose_new.pose.position.y = y_old + intervall_y * j;
-          pose_new.pose.position.z = 0.0;
-          pose_new.pose.orientation.x = 0.0;
-          pose_new.pose.orientation.y = 0.0;
-          pose_new.pose.orientation.z = 0.0;
-          pose_new.pose.orientation.z = 1.0;
-          pose_new.header.frame_id = "map";
-          pose_new.header.stamp = this->get_clock().get()->now();
-          //std::cout << "x " << pose_new.pose.position.x << " y " << pose_new.pose.position.y << std::endl;
-          //path_.poses.push_back(pose_new);
-          }
-          //std::cout << "x_new " << pose_.pose.position.x << " y_new " << pose_.pose.position.y  << std::endl;
-          x_old = pose_.pose.position.x;
-          y_old = pose_.pose.position.y;*/
-          path_.poses.push_back(pose_);
-        
-          //std::cout << "x: " << x << " y: " << y << std::endl;
-        
+        path_.poses.push_back(pose_);
+        path_.header.frame_id = "map";
+        path_.header.stamp = this->get_clock().get()->now();
+        for (auto pose : path_.poses) {
+          std::cout << "x: " << pose.pose.position.x
+                    << "y : " << pose.pose.position.y << std::endl;
+        }
+        response->path = path_;
+        RCLCPP_INFO(this->get_logger(), "%d size of path",
+                    response->path.poses.size());
       }
-
-    
-      geometry_msgs::msg::PoseStamped pose_;
-      /*nav_msgs::msg::Path path_res;
-      if(path_.poses.size() < 10)
-      {
-      for(int i = 0; i < path_.poses.size(); i++)
-      {
-        geometry_msgs::msg::PoseStamped pose_res;
-        pose_res = path_.poses[i];
-        path_res.poses.push_back(pose_res);
-      }
-      pose_.pose = request->goal.pose;
-      pose_.header.frame_id = "map";
-      pose_.header.stamp = this->get_clock().get()->now();
-      path_res.poses.push_back(pose_);
-      }
-      else{
-      for(int i = 0; i < 10; i++)
-      {
-        geometry_msgs::msg::PoseStamped pose_res;
-        pose_res = path_.poses[i];
-        path_res.poses.push_back(pose_res);
-      }
-      
-      pose_.pose = request->goal.pose;
-      pose_.header.frame_id = "map";
-      pose_.header.stamp = this->get_clock().get()->now();
-      path_.poses.push_back(pose_);
-      }*/
-      pose_.pose = request->goal.pose;
-      pose_.header.frame_id = "map";
-      pose_.header.stamp = this->get_clock().get()->now();
-      path_.poses.push_back(pose_);
-//      RCLCPP_INFO(this->get_logger(), "%d size of path", path_.poses.size());
-      path_.header.frame_id = "map";
-      path_.header.stamp = this->get_clock().get()->now();
-      for(auto pose : path_.poses)
-      {
-        std::cout << "x: " << pose.pose.position.x << "y : " << pose.pose.position.y << std::endl;
-      }
-      response->path = path_;
-      RCLCPP_INFO(this->get_logger(), "%d size of path",
-                  response->path.poses.size());
     }
-    }
-  
-  RCLCPP_INFO(this->get_logger(), "Passing response!");
+
+    RCLCPP_INFO(this->get_logger(), "Passing response!");
   }
-    }
-  geometry_msgs::msg::PoseStamped ecbs_server::draw_point(double x_1, double y_1,
-                                                 double x_2, double y_2,
-                                                 double d, unsigned int i) {
-  //double dist_ = sqrt(pow(x_2 - x_1, 2.0) + pow(y_2 - y_1, 2.0));
-  //double angle_ = atan2(y_2 - y_1, x_2 - x_1);
+}
+geometry_msgs::msg::PoseStamped ecbs_server::draw_point(double x_1, double y_1,
+                                                        double x_2, double y_2,
+                                                        double d,
+                                                        unsigned int i) {
+
   double diff_x = x_2 - x_1;
   double diff_y = y_2 - y_1;
 
   geometry_msgs::msg::PoseStamped pose_;
-  //pose_.pose.position.x = x_1 + (dist_ * i * d) * cos(angle_);
-  //pose_.pose.position.y = y_1 + (dist_ * i * d) * sin(angle_);
+
   pose_.pose.position.z = 0.0;
   pose_.pose.orientation.x = 0.0;
   pose_.pose.orientation.y = 0.0;
@@ -576,6 +484,6 @@ void ecbs_server::path_response(
 
   return pose_;
 }
-} // namespace mapf_action_server
+} // namespace ecbs_server
 
 RCLCPP_COMPONENTS_REGISTER_NODE(ecbs_server::ecbs_server)
