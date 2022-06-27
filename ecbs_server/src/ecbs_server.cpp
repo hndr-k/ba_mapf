@@ -315,6 +315,7 @@ bool ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
     return false;
   }
   agents.push_back(agent_);
+  std::cout << start_id << goal_id << std::endl;
   return true;
 }
 
@@ -427,20 +428,60 @@ void ecbs_server::path_response(
       if (path.robot_id == request->robotino_id) {
         for (int i = 0; i < path.x_poses.size(); i++) {
           std::cout << "SIZE PATH " << path.x_poses.size() << std::endl;
-          geometry_msgs::msg::PoseStamped pose_;
-          double x, y;
-          costmap_->mapToWorld(path.x_poses[i], path.y_poses[i], x, y);
-          pose_.pose.position.x = x;
-          pose_.pose.position.y = y;
-          pose_.pose.position.z = 0.0;
-          pose_.pose.orientation.x = 0.0;
-          pose_.pose.orientation.y = 0.0;
-          pose_.pose.orientation.z = 0.0;
-          pose_.pose.orientation.z = 1.0;
-          pose_.header.frame_id = "map";
-          pose_.header.stamp = this->get_clock().get()->now();
+          if (i < path.x_poses.size() - 1) {
+            geometry_msgs::msg::PoseStamped pose_;
+            geometry_msgs::msg::PoseStamped next_pose_;
+            geometry_msgs::msg::PoseStamped path_pose;
 
-          path_.poses.push_back(pose_);
+            double x, y;
+            costmap_->mapToWorld(path.x_poses[i], path.y_poses[i], x, y);
+            pose_.pose.position.x = x;
+            pose_.pose.position.y = y;
+            pose_.pose.position.z = 0.0;
+            pose_.pose.orientation.x = 0.0;
+            pose_.pose.orientation.y = 0.0;
+            pose_.pose.orientation.z = 0.0;
+            pose_.pose.orientation.z = 1.0;
+            pose_.header.frame_id = "map";
+            pose_.header.stamp = this->get_clock().get()->now();
+
+            costmap_->mapToWorld(path.x_poses[i + 1], path.y_poses[i + 1], x,
+                                 y);
+            next_pose_.pose.position.x = x;
+            next_pose_.pose.position.y = y;
+            next_pose_.pose.position.z = 0.0;
+            next_pose_.pose.orientation.x = 0.0;
+            next_pose_.pose.orientation.y = 0.0;
+            next_pose_.pose.orientation.z = 0.0;
+            next_pose_.pose.orientation.z = 1.0;
+            next_pose_.header.frame_id = "map";
+            next_pose_.header.stamp = this->get_clock().get()->now();
+            path_pose = rotateToNextPoint(pose_, next_pose_);
+            path_pose.header.frame_id = "map";
+            path_pose.header.stamp = this->get_clock().get()->now();
+
+            path_.poses.push_back(path_pose);
+          } else if (i == path.x_poses.size() - 1) {
+            geometry_msgs::msg::PoseStamped pose_;
+            geometry_msgs::msg::PoseStamped path_pose;
+
+            double x, y;
+            costmap_->mapToWorld(path.x_poses[i], path.y_poses[i], x, y);
+            pose_.pose.position.x = x;
+            pose_.pose.position.y = y;
+            pose_.pose.position.z = 0.0;
+            pose_.pose.orientation.x = 0.0;
+            pose_.pose.orientation.y = 0.0;
+            pose_.pose.orientation.z = 0.0;
+            pose_.pose.orientation.z = 1.0;
+            pose_.header.frame_id = "map";
+            pose_.header.stamp = this->get_clock().get()->now();
+            path_pose = rotateToNextPoint(pose_, request->goal);
+            path_pose.header.frame_id = "map";
+            path_pose.header.stamp = this->get_clock().get()->now();
+
+            path_.poses.push_back(path_pose);
+          }
         }
 
         geometry_msgs::msg::PoseStamped pose_;
@@ -482,6 +523,20 @@ geometry_msgs::msg::PoseStamped ecbs_server::draw_point(double x_1, double y_1,
   pose_.header.frame_id = "map";
   pose_.header.stamp = this->get_clock().get()->now();
 
+  return pose_;
+}
+
+geometry_msgs::msg::PoseStamped
+ecbs_server::rotateToNextPoint(geometry_msgs::msg::PoseStamped current_pose,
+                               geometry_msgs::msg::PoseStamped next_pose) {
+  geometry_msgs::msg::PoseStamped pose_;
+  pose_.pose = current_pose.pose;
+  tf2::Quaternion q_;
+  double yaw_ = atan2(next_pose.pose.position.x - pose_.pose.position.x,
+                      next_pose.pose.position.y - next_pose.pose.position.y);
+  q_.setRPY(0, 0, yaw_);
+  geometry_msgs::msg::Quaternion msg_quat = tf2::toMsg(q_);
+  pose_.pose.orientation = msg_quat;
   return pose_;
 }
 } // namespace ecbs_server

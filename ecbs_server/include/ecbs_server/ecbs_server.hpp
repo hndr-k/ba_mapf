@@ -3,9 +3,8 @@
 #include <math.h>
 
 #include <ecbs_server/ecbs.hpp>
-#include <ecbs_server/timer.hpp>
 #include <ecbs_server/structs.hpp>
-
+#include <ecbs_server/timer.hpp>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
@@ -16,12 +15,10 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 
-
 //#include "nav2_costmap_2d/costmap_2d.hpp"
 #include "nav2_costmap_2d/costmap_2d_ros.hpp"
 
-
-struct rosAgent{
+struct rosAgent {
   int id;
   int start_x;
   int start_y;
@@ -29,7 +26,7 @@ struct rosAgent{
   int goal_y;
 };
 
-struct rosPath{
+struct rosPath {
   std::vector<int> x_poses;
   std::vector<int> y_poses;
   std::vector<int> t_step;
@@ -43,9 +40,10 @@ namespace ecbs_server {
 class ecbs_server : public nav2_util::LifecycleNode {
 
 public:
-  //        ecbs_server(const rclcpp::NodeOptions &options = rclcpp::NodeOptions()) :
-  //        Node("mapf_action_server", options), map_(0.25, 3), cbs_() explicit
-  //        ecbs_server(const rclcpp::NodeOptions& options = rclcpp::NodeOptions()) :
+  //        ecbs_server(const rclcpp::NodeOptions &options =
+  //        rclcpp::NodeOptions()) : Node("mapf_action_server", options),
+  //        map_(0.25, 3), cbs_() explicit ecbs_server(const
+  //        rclcpp::NodeOptions& options = rclcpp::NodeOptions()) :
   //        rclcpp_lifecycle::LifecycleNode("mapf_action_server", options),
   //        map_(0.25, 3), cbs_() ecbs_server() :
   //        nav2_util::LifecycleNode("mapf_action_server", "", true), map_(0.25,
@@ -54,11 +52,13 @@ public:
   //
   ////            occ_grid_sub_ =
   /// this->create_subscription<nav_msgs::msg::OccupancyGrid>("global_costmap/costmap",
-  /// 10, std::bind(&ecbs_server::occ_grid_callback, this, std::placeholders::_1));
+  /// 10, std::bind(&ecbs_server::occ_grid_callback, this,
+  /// std::placeholders::_1));
   //            service_ =
   //            this->create_service<mapf_actions::srv::Mapf>("/off_field/mapf_plan",
-  //            std::bind(&ecbs_server::path_response, this, std::placeholders::_1,
-  //            std::placeholders::_2)); first_grid = true;
+  //            std::bind(&ecbs_server::path_response, this,
+  //            std::placeholders::_1, std::placeholders::_2)); first_grid =
+  //            true;
   //
   //            config_.agent_size = 0.25;
   //            config_.precision = 0.0000001;
@@ -72,7 +72,8 @@ public:
   //        }
   ////
   //        explicit ecbs_server(const std:.string & node_name);
-  explicit ecbs_server(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
+  explicit ecbs_server(
+      const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
   // ecbs_server();
   ~ecbs_server();
 
@@ -101,9 +102,9 @@ public:
   //        rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr
   //        occ_grid_sub_; nav_msgs::msg::OccupancyGrid current_grid_;
   rclcpp::Service<mapf_actions::srv::Mapf>::SharedPtr service_;
-  geometry_msgs::msg::PoseStamped draw_point(double x_1, double y_1,
-                                                 double x_2, double y_2,
-                                                 double d, unsigned int i);
+  geometry_msgs::msg::PoseStamped draw_point(double x_1, double y_1, double x_2,
+                                             double y_2, double d,
+                                             unsigned int i);
   // Variables for control loop
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -115,31 +116,34 @@ public:
   tf2_ros::TransformListener *tfl_;
   tf2_ros::Buffer *tf_;
 
-// variables used by eecbs
-  std::unordered_set<Location> obstacles; //done
+  // variables used by eecbs
+  std::unordered_set<Location> obstacles; // done
 
-    bool disappearAtGoal;
+  bool disappearAtGoal;
   float w;
-  int dimx; //done
-  int dimy; //done 
-  std::vector<PlanResult<State, Action, int> > solution;
+  int dimx; // done
+  int dimy; // done
+  std::vector<PlanResult<State, Action, int>> solution;
   std::unordered_set<State> startStatesSet;
-//Instance instance;
-std::vector<rosAgent> agents;
-std::vector<rosPath> paths;
+  // Instance instance;
+  std::vector<rosAgent> agents;
+  std::vector<rosPath> paths;
 
+  bool update_agent(geometry_msgs::msg::PoseStamped start,
+                    geometry_msgs::msg::PoseStamped goal, rosAgent &agent);
 
-bool update_agent(geometry_msgs::msg::PoseStamped start,
-                        geometry_msgs::msg::PoseStamped goal, rosAgent &agent);
+  bool create_agent(geometry_msgs::msg::PoseStamped start,
+                    geometry_msgs::msg::PoseStamped goal, int start_id,
+                    int goal_id, int robotino_id);
+  bool check_bounds(double start_x, double start_y, double goal_x,
+                    double goal_y);
+  bool check_obstacle(double start_x, double start_y, double goal_x,
+                      double goal_y);
+  geometry_msgs::msg::PoseStamped rotateToNextPoint(geometry_msgs::msg::PoseStamped current_pose, geometry_msgs::msg::PoseStamped next_pose);
+                    
+  boost::program_options::options_description desc;
+  boost::program_options::variables_map vm;
 
-
-bool create_agent(geometry_msgs::msg::PoseStamped start,
-                        geometry_msgs::msg::PoseStamped goal, int start_id,
-                        int goal_id, int robotino_id);
-bool check_bounds(double start_x, double start_y, double goal_x, double goal_y);
-bool check_obstacle(double start_x, double start_y, double goal_x, double goal_y);
-boost::program_options::options_description desc;
-boost::program_options::variables_map vm;
 protected:
   /**
    * @brief Configure member variables and initializes planner
@@ -178,4 +182,4 @@ protected:
   on_shutdown(const rclcpp_lifecycle::State &state) override;
 };
 
-} // namespace mapf_action_server
+} // namespace ecbs_server
