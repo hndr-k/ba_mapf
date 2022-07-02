@@ -19,11 +19,12 @@
 #include "nav2_costmap_2d/costmap_2d_ros.hpp"
 
 struct rosAgent {
-  int id;
+  int robot_id;
   int start_x;
   int start_y;
   int goal_x;
   int goal_y;
+  int request_id;
 };
 
 struct rosPath {
@@ -139,8 +140,10 @@ public:
                     double goal_y);
   bool check_obstacle(double start_x, double start_y, double goal_x,
                       double goal_y);
-  geometry_msgs::msg::PoseStamped rotateToNextPoint(geometry_msgs::msg::PoseStamped current_pose, geometry_msgs::msg::PoseStamped next_pose);
-                    
+  geometry_msgs::msg::PoseStamped
+  rotateToNextPoint(geometry_msgs::msg::PoseStamped current_pose,
+                    geometry_msgs::msg::PoseStamped next_pose);
+
   boost::program_options::options_description desc;
   boost::program_options::variables_map vm;
 

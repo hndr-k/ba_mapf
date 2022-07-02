@@ -292,10 +292,11 @@ bool ecbs_server::create_agent(geometry_msgs::msg::PoseStamped start,
   agent_.goal_y = goal_y;
   agent_.start_x = start_x;
   agent_.start_y = start_y;
-  agent_.id = robotino_id;
+  agent_.request_id = robotino_id;
+  agent_.robot_id = agents.size();
   int curr_agent_size = agents.size();
   for (int i = 0; i < curr_agent_size; i++) {
-    if (agent_.id != agents[i].id) {
+    if (agent_.request_id != agents[i].request_id) {
       if ((agent_.start_x == agents[i].start_x) &&
           (agent_.start_y == agents[i].start_y)) {
         return false;
@@ -332,7 +333,7 @@ bool ecbs_server::update_agent(geometry_msgs::msg::PoseStamped start,
                        goal_y);
   int curr_agent_size = agents.size();
   for (int i = 0; i < curr_agent_size; i++) {
-    if (agent.id != agents[i].id) {
+    if (agent.request_id != agents[i].request_id) {
       if ((start_x == agents[i].start_x) && (start_y == agents[i].start_y)) {
         return false;
       }
@@ -369,9 +370,9 @@ void ecbs_server::path_response(
 
   for (auto &agent : agents) {
 
-    if (agent.id == request->robotino_id) {
+    if (agent.request_id == request->robotino_id) {
 
-      RCLCPP_INFO(this->get_logger(), "Agent id %i update!", agent.id);
+      RCLCPP_INFO(this->get_logger(), "Agent id %i update!", agent.request_id);
 
       if (!update_agent(request->start, request->goal, agent)) {
         nav_msgs::msg::Path path_;
@@ -424,8 +425,14 @@ void ecbs_server::path_response(
     //            RCLCPP_INFO(this->get_logger(), "Wait for path!");
     //	}
     double x_old, y_old;
+    int request_robot_id;
+    for (auto agent : agents) {
+      if (request->robotino_id == agent.request_id) {
+        request_robot_id = agent.robot_id;
+      }
+    }
     for (auto &path : paths) {
-      if (path.robot_id == request->robotino_id) {
+      if (path.robot_id == request_robot_id) {
         for (int i = 0; i < path.x_poses.size(); i++) {
           std::cout << "SIZE PATH " << path.x_poses.size() << std::endl;
           if (i < path.x_poses.size() - 1) {
